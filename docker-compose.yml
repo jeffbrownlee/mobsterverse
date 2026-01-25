@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -25,6 +23,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
+      x-bake:
+        provenance: false
     container_name: mobsterverse-api
     ports:
       - "4000:4000"
@@ -53,6 +53,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:4000
+      x-bake:
+        provenance: false
     container_name: mobsterverse-web
     ports:
       - "3000:3000"

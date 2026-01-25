@@ -6,7 +6,7 @@ FROM base AS deps
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Build the source code
 FROM base AS builder
@@ -26,6 +26,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 apiuser
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/db/schema.sql ./dist/db/schema.sql
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 
