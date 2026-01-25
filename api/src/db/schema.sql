@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
   verification_token_expires TIMESTAMP,
   reset_token VARCHAR(255),
   reset_token_expires TIMESTAMP,
+  mfa_enabled BOOLEAN DEFAULT FALSE,
+  mfa_secret VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

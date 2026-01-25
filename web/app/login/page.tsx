@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
+import MFATokenInput from '@/components/MFATokenInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaToken, setMfaToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,11 +21,36 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await authAPI.login({ email, password });
+      await authAPI.login({ email, password, mfaToken: mfaToken || undefined });
       router.push('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Login failed. Please try again.';
+      const errorData = error.response?.data;
+      
+      // Check if MFA is required
+      if (errorData?.mfaRequired) {
+        setMfaRequired(true);
+        setError('');
+      } else {
+        const errorMessage = errorData?.error || 'Login failed. Please try again.';
+        setError(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMFASubmit = async (token: string) => {
+    setMfaToken(token);
+    setError('');
+    setLoading(true);
+
+    try {
+      await authAPI.login({ email, password, mfaToken: token });
+      router.push('/dashboard');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Invalid MFA token. Please try again.';
       setError(errorMessage);
+      setMfaToken('');
     } finally {
       setLoading(false);
     }
@@ -33,14 +61,41 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Log in to your account
+            {mfaRequired ? 'Enter verification code' : 'Log in to your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome back to Mobsterverse
+            {mfaRequired ? 'Enter the 6-digit code from your authenticator app' : 'Welcome back to Mobsterverse'}
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {mfaRequired ? (
+          <div className="mt-8 space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            )}
+            
+            <MFATokenInput 
+              onSubmit={handleMFASubmit}
+              loading={loading}
+              error={error}
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                setMfaRequired(false);
+                setMfaToken('');
+                setError('');
+              }}
+              className="w-full text-center text-sm text-indigo-600 hover:text-indigo-500"
+            >
+              ← Back to login
+            </button>
+          </div>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-sm text-red-800">{error}</p>
@@ -103,13 +158,14 @@ export default function LoginPage() {
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Sign up
               </Link>
             </p>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

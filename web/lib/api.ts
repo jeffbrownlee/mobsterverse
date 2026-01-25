@@ -26,12 +26,14 @@ export interface SignupData {
 export interface LoginData {
   email: string;
   password: string;
+  mfaToken?: string;
 }
 
 export interface User {
   id: string;
   email: string;
   email_verified: boolean;
+  mfa_enabled: boolean;
   created_at: string;
 }
 
@@ -70,6 +72,37 @@ export const authAPI = {
 
   getMe: async (): Promise<{ user: User }> => {
     const response = await api.get('/api/auth/me');
+    return response.data;
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string, mfaToken?: string) => {
+    const response = await api.post('/api/auth/change-password', { 
+      currentPassword, 
+      newPassword,
+      mfaToken 
+    });
+    return response.data;
+  },
+};
+
+export const mfaAPI = {
+  setupMFA: async () => {
+    const response = await api.post('/api/mfa/setup');
+    return response.data as { secret: string; qrCode: string };
+  },
+
+  enableMFA: async (secret: string, token: string) => {
+    const response = await api.post('/api/mfa/enable', { secret, token });
+    return response.data;
+  },
+
+  disableMFA: async (password: string, token: string) => {
+    const response = await api.post('/api/mfa/disable', { password, token });
+    return response.data;
+  },
+
+  verifyMFA: async (token: string) => {
+    const response = await api.post('/api/mfa/verify', { token });
     return response.data;
   },
 };

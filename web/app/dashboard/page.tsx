@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authAPI, User } from '@/lib/api';
 
 export default function DashboardPage() {
@@ -86,6 +87,52 @@ export default function DashboardPage() {
                 </dd>
               </div>
             </dl>
+          </div>
+
+          <div className="border-t border-gray-200 mt-6 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Security</h2>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Two-Factor Authentication</dt>
+                    <dd className="mt-1 text-sm text-gray-600">
+                      {user.mfa_enabled 
+                        ? 'Add an extra layer of security to your account' 
+                        : 'Protect your account with an authenticator app'}
+                    </dd>
+                  </div>
+                  <div>
+                    {user.mfa_enabled ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Enabled
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Disabled
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {!user.mfa_enabled && (
+                  <Link 
+                    href="/mfa-setup"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Enable Two-Factor Authentication
+                  </Link>
+                )}
+              </div>
+              
+              <div>
+                <Link 
+                  href="/change-password"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Change Password
+                </Link>
+              </div>
+            </div>
           </div>
 
           <div className="border-t border-gray-200 mt-6 pt-6">

@@ -9,6 +9,7 @@ import {
 } from '../utils/auth';
 import { validateEmail, validatePassword } from '../utils/validation';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.service';
+import { verifyMFAToken } from '../services/mfa.service';
 import { AuthRequest } from '../middleware/auth.middleware';
 
 const userRepo = new UserRepository();
@@ -75,7 +76,7 @@ export class AuthController {
   // Login
   login = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, password } = req.body;
+      const { email, password, mfaToken } = req.body;
 
       if (!email || !password) {
         res.status(400).json({ error: 'Email and password are required' });
@@ -102,6 +103,24 @@ export class AuthController {
           error: 'Email not verified. Please check your email for verification link.' 
         });
         return;
+      }
+
+      // Check if MFA is enabled
+      if (user.mfa_enabled) {
+        if (!mfaToken) {
+          res.status(403).json({ 
+            error: 'MFA token required',
+            mfaRequired: true 
+          });
+          return;
+        }
+
+        // Verify MFA token
+        const isValidMFA = verifyMFAToken(mfaToken, user.mfa_secret!);
+        if (!isValidMFA) {
+          res.status(401).json({ error: 'Invalid MFA token' });
+          return;
+        }
       }
 
       // Generate token
@@ -231,6 +250,73 @@ export class AuthController {
       res.json({ user: userRepo.toUserResponse(user) });
     } catch (error) {
       console.error('Get user error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  // Change password (protected route)
+  changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { currentPassword, newPassword, mfaToken } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({ error: 'Current password and new password are required' });
+        return;
+      }
+
+      // Get user
+      const user = await userRepo.findById(req.userId);
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Verify current password
+      const isValidPassword = await comparePassword(currentPassword, user.password_hash);
+      if (!isValidPassword) {
+        res.status(401).json({ error: 'Current password is incorrect' });
+        return;
+      }
+
+      // Check if MFA is enabled and verify token
+      if (user.mfa_enabled) {
+        if (!mfaToken) {
+          res.status(403).json({ 
+            error: 'MFA token required for password change',
+            mfaRequired: true 
+          });
+          return;
+        }
+
+        const isValidMFA = verifyMFAToken(mfaToken, user.mfa_secret!);
+        if (!isValidMFA) {
+          res.status(401).json({ error: 'Invalid MFA token' });
+          return;
+        }
+      }
+
+      // Validate new password
+      const passwordValidation = validatePassword(newPassword);
+      if (!passwordValidation.valid) {
+        res.status(400).json({ 
+          error: 'New password does not meet requirements',
+          details: passwordValidation.errors 
+        });
+        return;
+      }
+
+      // Update password
+      const passwordHash = await hashPassword(newPassword);
+      await userRepo.updatePassword(req.userId, passwordHash);
+
+      res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+      console.error('Change password error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

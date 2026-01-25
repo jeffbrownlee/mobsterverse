@@ -7,6 +7,8 @@ export interface User {
   verification_token_expires: Date | null;
   reset_token: string | null;
   reset_token_expires: Date | null;
+  mfa_enabled: boolean;
+  mfa_secret: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -22,5 +24,7 @@ export interface UserResponse {
   id: string;
   email: string;
   email_verified: boolean;
+  mfa_enabled: boolean;
   created_at: Date;
 }
+

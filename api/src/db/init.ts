@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
+import { runMigrations } from './migrations';
 
 export async function initializeDatabase(pool: Pool) {
   try {
@@ -11,6 +12,9 @@ export async function initializeDatabase(pool: Pool) {
     
     await pool.query(schemaSQL);
     console.log('✅ Database schema initialized');
+    
+    // Run migrations
+    await runMigrations(pool);
   } catch (error) {
     console.error('❌ Error initializing database:', error);
     throw error;

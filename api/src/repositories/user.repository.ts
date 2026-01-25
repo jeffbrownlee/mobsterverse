@@ -78,11 +78,53 @@ export class UserRepository {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async updatePassword(userId: string, newPasswordHash: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET password_hash = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [newPasswordHash, userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async enableMFA(userId: string, secret: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET mfa_enabled = true,
+          mfa_secret = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [secret, userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
+  async disableMFA(userId: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET mfa_enabled = false,
+          mfa_secret = NULL,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
       email: user.email,
       email_verified: user.email_verified,
+      mfa_enabled: user.mfa_enabled,
       created_at: user.created_at,
     };
   }
