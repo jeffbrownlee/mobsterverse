@@ -1,3 +1,6 @@
+export type UserStatus = 'active' | 'banned' | 'deleted';
+export type UserLevel = 'user' | 'moderator' | 'administrator';
+
 export interface User {
   id: string;
   email: string;
@@ -9,6 +12,9 @@ export interface User {
   reset_token_expires: Date | null;
   mfa_enabled: boolean;
   mfa_secret: string | null;
+  nickname: string | null;
+  status: UserStatus;
+  level: UserLevel;
   created_at: Date;
   updated_at: Date;
 }
@@ -25,6 +31,9 @@ export interface UserResponse {
   email: string;
   email_verified: boolean;
   mfa_enabled: boolean;
+  nickname: string | null;
+  status: UserStatus;
+  level: UserLevel;
   created_at: Date;
 }
 

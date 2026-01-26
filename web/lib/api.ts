@@ -34,6 +34,7 @@ export interface User {
   email: string;
   email_verified: boolean;
   mfa_enabled: boolean;
+  nickname: string | null;
   created_at: string;
 }
 
@@ -81,6 +82,11 @@ export const authAPI = {
       newPassword,
       mfaToken 
     });
+    return response.data;
+  },
+
+  updateNickname: async (nickname: string) => {
+    const response = await api.post('/api/auth/update-nickname', { nickname });
     return response.data;
   },
 };

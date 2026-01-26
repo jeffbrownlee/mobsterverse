@@ -8,6 +8,10 @@ import { authAPI, User } from '@/lib/api';
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [nicknameError, setNicknameError] = useState('');
+  const [nicknameSuccess, setNicknameSuccess] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,6 +19,7 @@ export default function DashboardPage() {
       try {
         const response = await authAPI.getMe();
         setUser(response.user);
+        setNickname(response.user.nickname || '');
       } catch (error) {
         router.push('/login');
       } finally {
@@ -28,6 +33,27 @@ export default function DashboardPage() {
   const handleLogout = () => {
     authAPI.logout();
     router.push('/login');
+  };
+
+  const handleNicknameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNicknameError('');
+    setNicknameSuccess(false);
+
+    if (nickname.length < 3 || nickname.length > 50) {
+      setNicknameError('Nickname must be between 3 and 50 characters');
+      return;
+    }
+
+    try {
+      await authAPI.updateNickname(nickname);
+      setUser(prev => prev ? { ...prev, nickname } : null);
+      setEditingNickname(false);
+      setNicknameSuccess(true);
+      setTimeout(() => setNicknameSuccess(false), 3000);
+    } catch (error: any) {
+      setNicknameError(error.response?.data?.error || 'Failed to update nickname');
+    }
   };
 
   if (loading) {
@@ -61,10 +87,62 @@ export default function DashboardPage() {
 
           <div className="border-t border-gray-200 pt-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Account</h2>
+            {nicknameSuccess && (
+              <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-800">Nickname updated successfully!</p>
+              </div>
+            )}
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Email</dt>
                 <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Nickname</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {editingNickname ? (
+                    <form onSubmit={handleNicknameSubmit} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                        placeholder="Enter nickname"
+                        maxLength={50}
+                      />
+                      <button
+                        type="submit"
+                        className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingNickname(false);
+                          setNickname(user.nickname || '');
+                          setNicknameError('');
+                        }}
+                        className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span>{user.nickname || 'Not set'}</span>
+                      <button
+                        onClick={() => setEditingNickname(true)}
+                        className="text-xs text-indigo-600 hover:text-indigo-800"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                  {nicknameError && (
+                    <p className="text-xs text-red-600 mt-1">{nicknameError}</p>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt className="text-sm font-medium text-gray-500">Status</dt>

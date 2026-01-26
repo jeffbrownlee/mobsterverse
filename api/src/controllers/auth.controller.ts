@@ -254,6 +254,36 @@ export class AuthController {
     }
   };
 
+  // Update nickname (protected route)
+  updateNickname = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { nickname } = req.body;
+
+      if (!nickname) {
+        res.status(400).json({ error: 'Nickname is required' });
+        return;
+      }
+
+      if (nickname.length < 3 || nickname.length > 50) {
+        res.status(400).json({ error: 'Nickname must be between 3 and 50 characters' });
+        return;
+      }
+
+      // Update nickname
+      await userRepo.updateNickname(req.userId, nickname);
+
+      res.json({ message: 'Nickname updated successfully' });
+    } catch (error) {
+      console.error('Update nickname error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
   // Change password (protected route)
   changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
     try {

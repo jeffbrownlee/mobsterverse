@@ -15,5 +15,6 @@ router.post('/reset-password', authController.resetPassword);
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
 router.post('/change-password', authenticate, authController.changePassword);
+router.post('/update-nickname', authenticate, authController.updateNickname);
 
 export default router;

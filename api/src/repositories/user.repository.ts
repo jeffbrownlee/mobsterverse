@@ -119,12 +119,26 @@ export class UserRepository {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async updateNickname(userId: string, nickname: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET nickname = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [nickname, userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
       email: user.email,
       email_verified: user.email_verified,
       mfa_enabled: user.mfa_enabled,
+      nickname: user.nickname,
       created_at: user.created_at,
     };
   }
