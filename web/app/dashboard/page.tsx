@@ -120,29 +120,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">My Games</h2>
-            {myGames.length === 0 ? (
-              <p className="text-gray-600 mb-8">You haven&apos;t joined any games yet.</p>
-            ) : (
-              <div className="space-y-4 mb-8">
-                {myGames.map((game) => (
-                  <div key={game.id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
-                        <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p><strong>Playing as:</strong> {game.player.name}</p>
-                          <p><strong>Started:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
-                          <p><strong>Duration:</strong> {game.length_days} days</p>
-                          <p><strong>Status:</strong> <span className="capitalize">{game.status}</span></p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Active Games</h2>
             {activeGames.length === 0 ? (
               <p className="text-gray-600 mb-8">No active games at the moment.</p>
@@ -188,6 +165,9 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          {isPlayerInGame(game.id) && (
+                            <p><strong>Playing as:</strong> {playersByGame.get(game.id)?.name}</p>
+                          )}
                           <p><strong>Starts:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
                         </div>
