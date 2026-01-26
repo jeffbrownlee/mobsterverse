@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
 import { GameRepository } from '../repositories/game.repository';
+import { PlayerRepository } from '../repositories/player.repository';
 import pool from '../db/connection';
 import { GameCreateData, GameUpdateData } from '../types/game.types';
+import { PlayerCreateData } from '../types/player.types';
 
 const gameRepository = new GameRepository(pool);
+const playerRepository = new PlayerRepository(pool);
 
 export class GameController {
   getStatus = (req: Request, res: Response) => {
@@ -138,6 +141,123 @@ export class GameController {
     } catch (error) {
       console.error('Delete game error:', error);
       res.status(500).json({ error: 'Failed to delete game' });
+    }
+  };
+
+  // Join a game (create a player for the user in the game)
+  joinGame = async (req: Request, res: Response) => {
+    try {
+      const gameId = parseInt(req.params.id as string);
+      const { name } = req.body;
+      const userId = (req as any).userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Player name is required' });
+      }
+
+      if (name.length > 100) {
+        return res.status(400).json({ error: 'Player name must be 100 characters or less' });
+      }
+
+      // Check if game exists
+      const game = await gameRepository.findById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      // Check if user is already in the game
+      const existingPlayer = await playerRepository.findByGameAndUser(gameId, userId);
+      if (existingPlayer) {
+        return res.status(400).json({ error: 'You have already joined this game', player: existingPlayer });
+      }
+
+      // Create the player
+      const playerData: PlayerCreateData = {
+        game_id: gameId,
+        user_id: userId,
+        name: name.trim(),
+      };
+
+      const player = await playerRepository.create(playerData);
+      res.status(201).json({ player, message: 'Successfully joined the game' });
+    } catch (error) {
+      console.error('Join game error:', error);
+      res.status(500).json({ error: 'Failed to join game' });
+    }
+  };
+
+  // Get players for a game
+  getGamePlayers = async (req: Request, res: Response) => {
+    try {
+      const gameId = parseInt(req.params.id as string);
+
+      // Check if game exists
+      const game = await gameRepository.findById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      const players = await playerRepository.findByGameWithUserInfo(gameId);
+      res.json({ players, count: players.length });
+    } catch (error) {
+      console.error('Get game players error:', error);
+      res.status(500).json({ error: 'Failed to fetch players' });
+    }
+  };
+
+  // Get user's player info for a specific game
+  getMyPlayer = async (req: Request, res: Response) => {
+    try {
+      const gameId = parseInt(req.params.id as string);
+      const userId = (req as any).userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const player = await playerRepository.findByGameAndUser(gameId, userId);
+
+      if (!player) {
+        return res.status(404).json({ error: 'You have not joined this game' });
+      }
+
+      res.json({ player });
+    } catch (error) {
+      console.error('Get my player error:', error);
+      res.status(500).json({ error: 'Failed to fetch player' });
+    }
+  };
+
+  // Get all games the user has joined
+  getMyGames = async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const players = await playerRepository.findByUser(userId);
+      
+      // Get game details for each player
+      const gamesWithPlayerInfo = await Promise.all(
+        players.map(async (player) => {
+          const game = await gameRepository.findById(player.game_id);
+          return {
+            ...game,
+            player,
+          };
+        })
+      );
+
+      res.json({ games: gamesWithPlayerInfo });
+    } catch (error) {
+      console.error('Get my games error:', error);
+      res.status(500).json({ error: 'Failed to fetch games' });
     }
   };
 }

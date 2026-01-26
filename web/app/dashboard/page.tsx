@@ -3,13 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, User, gameAPI, Game } from '@/lib/api';
+import { authAPI, User, gameAPI, Game, Player } from '@/lib/api';
+import JoinGameDialog from '@/components/JoinGameDialog';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeGames, setActiveGames] = useState<Game[]>([]);
   const [upcomingGames, setUpcomingGames] = useState<Game[]>([]);
+  const [myGames, setMyGames] = useState<Array<Game & { player: Player }>>([]);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [playersByGame, setPlayersByGame] = useState<Map<number, Player>>(new Map());
   const router = useRouter();
 
   useEffect(() => {
@@ -18,9 +22,23 @@ export default function DashboardPage() {
         const userResponse = await authAPI.getMe();
         setUser(userResponse.user);
 
-        const gamesResponse = await gameAPI.getActiveAndUpcoming();
+        const [gamesResponse, myGamesResponse] = await Promise.all([
+          gameAPI.getActiveAndUpcoming(),
+          gameAPI.getMyGames(),
+        ]);
+
         setActiveGames(gamesResponse.active);
         setUpcomingGames(gamesResponse.upcoming);
+        setMyGames(myGamesResponse.games);
+
+        // Build a map of game IDs to player objects
+        const playerMap = new Map<number, Player>();
+        myGamesResponse.games.forEach((game) => {
+          if (game.player) {
+            playerMap.set(game.id, game.player);
+          }
+        });
+        setPlayersByGame(playerMap);
       } catch (error) {
         router.push('/login');
       } finally {
@@ -34,6 +52,25 @@ export default function DashboardPage() {
   const handleLogout = () => {
     authAPI.logout();
     router.push('/login');
+  };
+
+  const handleJoinClick = (game: Game) => {
+    setSelectedGame(game);
+  };
+
+  const handleJoinSuccess = (player: Player) => {
+    // Add the player to the map
+    setPlayersByGame(new Map(playersByGame).set(selectedGame!.id, player));
+    setSelectedGame(null);
+    
+    // Optionally refresh the game lists
+    gameAPI.getMyGames().then((response) => {
+      setMyGames(response.games);
+    });
+  };
+
+  const isPlayerInGame = (gameId: number): boolean => {
+    return playersByGame.has(gameId);
   };
 
   if (loading) {
@@ -82,6 +119,29 @@ export default function DashboardPage() {
           </div>
 
           <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">My Games</h2>
+            {myGames.length === 0 ? (
+              <p className="text-gray-600 mb-8">You haven&apos;t joined any games yet.</p>
+            ) : (
+              <div className="space-y-4 mb-8">
+                {myGames.map((game) => (
+                  <div key={game.id} className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
+                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          <p><strong>Playing as:</strong> {game.player.name}</p>
+                          <p><strong>Started:</strong> {new Date(game.start_date).toLocaleDateString()}</p>
+                          <p><strong>Duration:</strong> {game.length_days} days</p>
+                          <p><strong>Status:</strong> <span className="capitalize">{game.status}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Active Games</h2>
             {activeGames.length === 0 ? (
               <p className="text-gray-600 mb-8">No active games at the moment.</p>
@@ -98,9 +158,18 @@ export default function DashboardPage() {
                           <p><strong>Ends:</strong> {new Date(new Date(game.start_date).getTime() + game.length_days * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        Join Game
-                      </button>
+                      {isPlayerInGame(game.id) ? (
+                        <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
+                          Already Joined
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => handleJoinClick(game)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          Join Game
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -133,6 +202,15 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {selectedGame && user && (
+        <JoinGameDialog
+          game={selectedGame}
+          userNickname={user.nickname}
+          onClose={() => setSelectedGame(null)}
+          onSuccess={handleJoinSuccess}
+        />
+      )}
     </div>
   );
 }

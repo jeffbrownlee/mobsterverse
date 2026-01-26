@@ -65,6 +65,22 @@ export interface GameUpdateData {
   status?: GameStatus;
 }
 
+export interface Player {
+  id: string;
+  game_id: number;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlayerWithUserInfo extends Player {
+  email: string;
+  nickname: string | null;
+  status: string;
+  level: string;
+}
+
 export const authAPI = {
   signup: async (data: SignupData) => {
     const response = await api.post('/api/auth/signup', data);
@@ -180,6 +196,30 @@ export const gameAPI = {
   // Admin: Delete a game
   deleteGame: async (id: number): Promise<{ message: string }> => {
     const response = await api.delete(`/api/game/${id}`);
+    return response.data;
+  },
+
+  // Join a game
+  joinGame: async (id: number, name: string): Promise<{ player: Player; message: string }> => {
+    const response = await api.post(`/api/game/${id}/join`, { name });
+    return response.data;
+  },
+
+  // Get players in a game
+  getGamePlayers: async (id: number): Promise<{ players: PlayerWithUserInfo[]; count: number }> => {
+    const response = await api.get(`/api/game/${id}/players`);
+    return response.data;
+  },
+
+  // Get my player info for a specific game
+  getMyPlayer: async (id: number): Promise<{ player: Player }> => {
+    const response = await api.get(`/api/game/${id}/my-player`);
+    return response.data;
+  },
+
+  // Get all games I've joined
+  getMyGames: async (): Promise<{ games: Array<Game & { player: Player }> }> => {
+    const response = await api.get('/api/game/my-games');
     return response.data;
   },
 };
