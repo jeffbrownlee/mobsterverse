@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { authAPI, User, gameAPI, Game, Player } from '@/lib/api';
 import JoinGameDialog from '@/components/JoinGameDialog';
 import { formatDateNoTZ, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
+import { useGame } from '@/contexts/GameContext';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [playersByGame, setPlayersByGame] = useState<Map<number, Player>>(new Map());
   const router = useRouter();
+  const { setCurrentGame } = useGame();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,9 +139,18 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       {isPlayerInGame(game.id) ? (
-                        <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
-                          Already Joined
-                        </span>
+                        <button
+                          onClick={() => {
+                            const player = playersByGame.get(game.id);
+                            if (player) {
+                              setCurrentGame(game, player);
+                              router.push('/game');
+                            }
+                          }}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          Play Now
+                        </button>
                       ) : (
                         <button 
                           onClick={() => handleJoinClick(game)}
