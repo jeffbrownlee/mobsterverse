@@ -78,71 +78,24 @@ export default function AdminPage() {
 
           <div className="border-t border-gray-200 pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Game Management */}
+              <Link href="/admin/games" className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Game Management</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Create, view, and manage games
+                </p>
+                <div className="text-blue-600 font-medium">Manage Games →</div>
+              </Link>
+
               {/* User Management */}
-              <div className="bg-gray-50 rounded-lg p-6">
+              <Link href="/admin/users" className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">User Management</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Manage users, roles, and permissions
                 </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Manage Users
-                </button>
-              </div>
+                <div className="text-blue-600 font-medium">Manage Users →</div>
+              </Link>
 
-              {/* System Settings */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">System Settings</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Configure system-wide settings
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  View Settings
-                </button>
-              </div>
-
-              {/* Analytics */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  View system analytics and reports
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  View Analytics
-                </button>
-              </div>
-
-              {/* Content Moderation */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Content Moderation</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Review and moderate user content
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Moderate Content
-                </button>
-              </div>
-
-              {/* System Logs */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">System Logs</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  View system logs and activity
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  View Logs
-                </button>
-              </div>
-
-              {/* Database Management */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Database</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Database management and backups
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Manage Database
-                </button>
-              </div>
             </div>
           </div>
 

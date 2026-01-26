@@ -31,6 +31,7 @@ export interface LoginData {
 
 export type UserStatus = 'active' | 'banned' | 'deleted';
 export type UserLevel = 'user' | 'moderator' | 'administrator';
+export type GameStatus = 'active' | 'closing' | 'complete';
 
 export interface User {
   id: string;
@@ -41,6 +42,27 @@ export interface User {
   status: UserStatus;
   level: UserLevel;
   created_at: string;
+}
+
+export interface Game {
+  id: number;
+  start_date: string;
+  length_days: number;
+  status: GameStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GameCreateData {
+  start_date: string;
+  length_days: number;
+  status: GameStatus;
+}
+
+export interface GameUpdateData {
+  start_date?: string;
+  length_days?: number;
+  status?: GameStatus;
 }
 
 export const authAPI = {
@@ -120,6 +142,63 @@ export const mfaAPI = {
 
   verifyMFA: async (token: string) => {
     const response = await api.post('/api/mfa/verify', { token });
+    return response.data;
+  },
+};
+
+export const gameAPI = {
+  // Get active and upcoming games (for regular users)
+  getActiveAndUpcoming: async (): Promise<{ active: Game[]; upcoming: Game[] }> => {
+    const response = await api.get('/api/game/active-upcoming');
+    return response.data;
+  },
+
+  // Admin: Get all games
+  getAllGames: async (): Promise<{ games: Game[] }> => {
+    const response = await api.get('/api/game');
+    return response.data;
+  },
+
+  // Admin: Get a single game
+  getGame: async (id: number): Promise<{ game: Game }> => {
+    const response = await api.get(`/api/game/${id}`);
+    return response.data;
+  },
+
+  // Admin: Create a game
+  createGame: async (data: GameCreateData): Promise<{ game: Game }> => {
+    const response = await api.post('/api/game', data);
+    return response.data;
+  },
+
+  // Admin: Update a game
+  updateGame: async (id: number, data: GameUpdateData): Promise<{ game: Game }> => {
+    const response = await api.put(`/api/game/${id}`, data);
+    return response.data;
+  },
+
+  // Admin: Delete a game
+  deleteGame: async (id: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/api/game/${id}`);
+    return response.data;
+  },
+};
+
+export interface UserUpdateData {
+  level: UserLevel;
+  status: UserStatus;
+}
+
+export const userAPI = {
+  // Admin: Get all users
+  getAllUsers: async (): Promise<{ users: User[] }> => {
+    const response = await api.get('/api/admin/users');
+    return response.data;
+  },
+
+  // Admin: Update a user
+  updateUser: async (userId: string, data: UserUpdateData): Promise<{ user: User }> => {
+    const response = await api.put(`/api/admin/users/${userId}`, data);
     return response.data;
   },
 };

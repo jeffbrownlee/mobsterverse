@@ -5,6 +5,7 @@ import gameRoutes from './routes/game.routes';
 import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import mfaRoutes from './routes/mfa.routes';
+import userRoutes from './routes/user.routes';
 import pool from './db/connection';
 import { initializeDatabase } from './db/init';
 
@@ -29,6 +30,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/mfa', mfaRoutes);
+app.use('/api', userRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

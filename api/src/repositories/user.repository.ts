@@ -145,6 +145,26 @@ export class UserRepository {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async findAll(): Promise<User[]> {
+    const query = 'SELECT * FROM users ORDER BY created_at DESC';
+    const result = await pool.query(query);
+    return result.rows;
+  }
+
+  async updateLevelAndStatus(userId: string, level: string, status: string): Promise<User | null> {
+    const query = `
+      UPDATE users 
+      SET level = $1,
+          status = $2,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [level, status, userId]);
+    return result.rows[0] || null;
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
