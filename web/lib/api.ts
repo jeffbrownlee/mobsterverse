@@ -29,12 +29,17 @@ export interface LoginData {
   mfaToken?: string;
 }
 
+export type UserStatus = 'active' | 'banned' | 'deleted';
+export type UserLevel = 'user' | 'moderator' | 'administrator';
+
 export interface User {
   id: string;
   email: string;
   email_verified: boolean;
   mfa_enabled: boolean;
   nickname: string | null;
+  status: UserStatus;
+  level: UserLevel;
   created_at: string;
 }
 
