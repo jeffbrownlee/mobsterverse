@@ -89,6 +89,12 @@ export const authAPI = {
     const response = await api.post('/api/auth/update-nickname', { nickname });
     return response.data;
   },
+
+  deleteAccount: async () => {
+    const response = await api.delete('/api/auth/delete-account');
+    localStorage.removeItem('auth_token');
+    return response.data;
+  },
 };
 
 export const mfaAPI = {

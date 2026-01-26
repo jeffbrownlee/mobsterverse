@@ -132,6 +132,19 @@ export class UserRepository {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async deleteAccount(userId: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET status = 'deleted',
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1 AND status = 'active'
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
@@ -139,6 +152,8 @@ export class UserRepository {
       email_verified: user.email_verified,
       mfa_enabled: user.mfa_enabled,
       nickname: user.nickname,
+      status: user.status,
+      level: user.level,
       created_at: user.created_at,
     };
   }

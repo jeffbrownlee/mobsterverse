@@ -97,6 +97,18 @@ export class AuthController {
         return;
       }
 
+      // Check if account is active
+      if (user.status !== 'active') {
+        const statusMessages = {
+          banned: 'Your account has been banned. Please contact support.',
+          deleted: 'Your account has been deleted.'
+        };
+        res.status(403).json({ 
+          error: statusMessages[user.status as 'banned' | 'deleted'] || 'Your account is not active.' 
+        });
+        return;
+      }
+
       // Check if email is verified
       if (!user.email_verified) {
         res.status(403).json({ 
@@ -181,6 +193,23 @@ export class AuthController {
         return;
       }
 
+      // Handle deleted accounts with error message
+      if (user.status === 'deleted') {
+        res.status(403).json({ 
+          error: 'Your account has been deleted.' 
+        });
+        return;
+      }
+
+      // For banned accounts, pretend to send but silently squash
+      if (user.status === 'banned') {
+        res.json({ 
+          message: 'If an account exists with that email, a password reset link has been sent.' 
+        });
+        return;
+      }
+
+      // Only send reset email for active accounts
       // Generate reset token
       const resetToken = generateResetToken();
       const resetExpires = new Date();
@@ -347,6 +376,28 @@ export class AuthController {
       res.json({ message: 'Password changed successfully' });
     } catch (error) {
       console.error('Change password error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  // Delete account (protected route)
+  deleteAccount = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const success = await userRepo.deleteAccount(req.userId);
+
+      if (!success) {
+        res.status(400).json({ error: 'Failed to delete account' });
+        return;
+      }
+
+      res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      console.error('Delete account error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   };
