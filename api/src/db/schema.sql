@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS players (
   name VARCHAR(100) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(game_id, user_id)
+  UNIQUE(game_id, user_id),
+  UNIQUE(game_id, name)
 );
 
 -- Create indexes for faster lookups

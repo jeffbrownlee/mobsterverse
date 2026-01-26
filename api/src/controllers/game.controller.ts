@@ -175,6 +175,12 @@ export class GameController {
         return res.status(400).json({ error: 'You have already joined this game', player: existingPlayer });
       }
 
+      // Check if the name is already taken by another user
+      const existingName = await playerRepository.findByName(name.trim());
+      if (existingName && existingName.user_id !== userId) {
+        return res.status(400).json({ error: 'This player name is already reserved by another user. Please choose a different name.' });
+      }
+
       // Create the player
       const playerData: PlayerCreateData = {
         game_id: gameId,
@@ -184,8 +190,19 @@ export class GameController {
 
       const player = await playerRepository.create(playerData);
       res.status(201).json({ player, message: 'Successfully joined the game' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Join game error:', error);
+      
+      // Check for unique constraint violations
+      if (error.code === '23505') {
+        if (error.constraint === 'players_game_id_user_id_key') {
+          return res.status(400).json({ error: 'You have already joined this game' });
+        }
+        if (error.constraint === 'players_game_id_name_key') {
+          return res.status(400).json({ error: 'This player name is already taken in this game. Please choose a different name.' });
+        }
+      }
+      
       res.status(500).json({ error: 'Failed to join game' });
     }
   };

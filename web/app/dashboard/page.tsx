@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, User, gameAPI, Game, Player } from '@/lib/api';
 import JoinGameDialog from '@/components/JoinGameDialog';
+import { formatDateNoTZ, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -131,7 +132,7 @@ export default function DashboardPage() {
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
                           <p><strong>Playing as:</strong> {game.player.name}</p>
-                          <p><strong>Started:</strong> {new Date(game.start_date).toLocaleDateString()}</p>
+                          <p><strong>Started:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
                           <p><strong>Status:</strong> <span className="capitalize">{game.status}</span></p>
                         </div>
@@ -153,9 +154,9 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p><strong>Started:</strong> {new Date(game.start_date).toLocaleDateString()}</p>
+                          <p><strong>Started:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
-                          <p><strong>Ends:</strong> {new Date(new Date(game.start_date).getTime() + game.length_days * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+                          <p><strong>Ends:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
                         </div>
                       </div>
                       {isPlayerInGame(game.id) ? (
@@ -187,13 +188,22 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p><strong>Starts:</strong> {new Date(game.start_date).toLocaleString()}</p>
+                          <p><strong>Starts:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
                         </div>
                       </div>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                        Upcoming
-                      </span>
+                      {isPlayerInGame(game.id) ? (
+                        <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
+                          Already Joined
+                        </span>
+                      ) : (
+                        <button 
+                          onClick={() => handleJoinClick(game)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Join Game
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

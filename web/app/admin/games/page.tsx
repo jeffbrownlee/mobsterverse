@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, User, gameAPI, Game, GameStatus } from '@/lib/api';
+import { toDateTimeLocal, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
 
 export default function AdminGamesPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -58,6 +59,7 @@ export default function AdminGamesPage() {
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Send the datetime-local value directly - it's already in the format we want
       await gameAPI.createGame(formData);
       setShowCreateForm(false);
       setFormData({ start_date: '', length_days: 7, status: 'active' });
@@ -73,6 +75,7 @@ export default function AdminGamesPage() {
     if (!editingGame) return;
     
     try {
+      // Send the datetime-local value directly - it's already in the format we want
       await gameAPI.updateGame(editingGame.id, formData);
       setEditingGame(null);
       setFormData({ start_date: '', length_days: 7, status: 'active' });
@@ -98,7 +101,7 @@ export default function AdminGamesPage() {
   const startEdit = (game: Game) => {
     setEditingGame(game);
     setFormData({
-      start_date: new Date(game.start_date).toISOString().slice(0, 16),
+      start_date: toDateTimeLocal(game.start_date),
       length_days: game.length_days,
       status: game.status,
     });
@@ -257,10 +260,10 @@ export default function AdminGamesPage() {
                           </span>
                         </div>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p><strong>Start Date:</strong> {new Date(game.start_date).toLocaleString()}</p>
-                          <p><strong>Length:</strong> {game.length_days} days</p>
-                          <p><strong>End Date:</strong> {new Date(new Date(game.start_date).getTime() + game.length_days * 24 * 60 * 60 * 1000).toLocaleString()}</p>
-                          <p><strong>Created:</strong> {new Date(game.created_at).toLocaleString()}</p>
+                          <p><strong>Start Date:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
+                          <p><strong>Duration:</strong> {game.length_days} days</p>
+                          <p><strong>End Date:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
+                          <p><strong>Created:</strong> {formatDateTimeNoTZ(game.created_at)}</p>
                         </div>
                       </div>
                       <div className="flex gap-2">

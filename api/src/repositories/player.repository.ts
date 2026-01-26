@@ -68,6 +68,14 @@ export class PlayerRepository {
     return result.rows;
   }
 
+  async findByName(name: string): Promise<Player | null> {
+    const result = await this.pool.query(
+      'SELECT * FROM players WHERE name = $1 LIMIT 1',
+      [name]
+    );
+    return result.rows[0] || null;
+  }
+
   async update(id: string, data: PlayerUpdateData): Promise<Player | null> {
     const updates: string[] = [];
     const values: any[] = [];
