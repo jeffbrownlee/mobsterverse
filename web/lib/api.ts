@@ -126,11 +126,16 @@ export const authAPI = {
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
     }
+    // Save user timezone to localStorage for date conversions
+    if (response.data.user?.timezone) {
+      localStorage.setItem('user_timezone', response.data.user.timezone);
+    }
     return response.data;
   },
 
   logout: () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_timezone');
   },
 
   verifyEmail: async (token: string) => {
@@ -150,6 +155,10 @@ export const authAPI = {
 
   getMe: async (): Promise<{ user: User }> => {
     const response = await api.get('/api/auth/me');
+    // Save user timezone to localStorage for date conversions
+    if (response.data.user?.timezone) {
+      localStorage.setItem('user_timezone', response.data.user.timezone);
+    }
     return response.data;
   },
 

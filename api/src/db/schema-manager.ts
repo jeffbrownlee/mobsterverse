@@ -27,8 +27,8 @@ export async function createGameSchema(pool: Pool, gameId: number): Promise<void
         turns_transferred INTEGER DEFAULT 0 NOT NULL,
         money_cash INTEGER DEFAULT 0 NOT NULL,
         money_bank INTEGER DEFAULT 0 NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id),
         UNIQUE(name)
       )

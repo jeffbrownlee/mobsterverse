@@ -1,49 +1,155 @@
-// Utility functions for date formatting
+// Utility functions for date formatting with timezone support
 
-// Format a date string treating it as a naive/local datetime (no timezone conversion)
+/**
+ * Get the user's timezone from localStorage or default to browser timezone
+ */
+export function getUserTimezone(): string {
+  if (typeof window !== 'undefined') {
+    const savedTimezone = localStorage.getItem('user_timezone');
+    if (savedTimezone) {
+      return savedTimezone;
+    }
+  }
+  // Default to browser timezone
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * Convert UTC date string to user's timezone and format as date
+ */
 export function formatDateNoTZ(dateString: string): string {
-  // Parse the ISO string as local time by removing any Z and treating as-is
-  const cleanString = dateString.replace('Z', '').replace(/\.\d{3}$/, '');
-  const date = new Date(cleanString);
-  return date.toLocaleDateString();
+  const date = new Date(dateString); // Parse as UTC
+  const timezone = getUserTimezone();
+  return date.toLocaleDateString('en-US', { timeZone: timezone });
 }
 
+/**
+ * Convert UTC date string to user's timezone and format as date and time
+ */
 export function formatDateTimeNoTZ(dateString: string): string {
-  // Parse the ISO string as local time by removing any Z and treating as-is
-  const cleanString = dateString.replace('Z', '').replace(/\.\d{3}$/, '');
-  const date = new Date(cleanString);
-  return date.toLocaleString();
+  const date = new Date(dateString); // Parse as UTC
+  const timezone = getUserTimezone();
+  return date.toLocaleString('en-US', { timeZone: timezone });
 }
 
-// Convert a date string to datetime-local input format (YYYY-MM-DDTHH:mm)
-// Strips the Z and any timezone info to display the raw date/time
+/**
+ * Convert UTC date string to datetime-local input format in user's timezone
+ * Returns format: YYYY-MM-DDTHH:mm
+ */
 export function toDateTimeLocal(dateString: string): string {
-  // Remove the Z if present and just take the date/time part
-  const cleanString = dateString.replace('Z', '').split('.')[0];
-  return cleanString.slice(0, 16);
+  const date = new Date(dateString); // Parse as UTC
+  const timezone = getUserTimezone();
+  
+  // Format the date in the user's timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const partsMap: Record<string, string> = {};
+  parts.forEach(part => {
+    if (part.type !== 'literal') {
+      partsMap[part.type] = part.value;
+    }
+  });
+  
+  const year = partsMap.year;
+  const month = partsMap.month;
+  const day = partsMap.day;
+  const hour = partsMap.hour;
+  const minute = partsMap.minute;
+  
+  return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
-// Add days to a date string and return formatted string
+/**
+ * Convert datetime-local input value (in user's timezone) to UTC ISO string
+ * Input format: YYYY-MM-DDTHH:mm (treated as user's timezone)
+ * Output format: ISO 8601 UTC string
+ */
+export function localDateTimeToUTC(localDateTime: string): string {
+  const timezone = getUserTimezone();
+  
+  // Parse the input
+  const parts = localDateTime.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!parts) {
+    throw new Error('Invalid datetime format');
+  }
+  
+  const [, year, month, day, hour, minute] = parts;
+  
+  // Create the date string - we'll interpret this as being in the user's timezone
+  // by creating a formatter that outputs in the user's timezone
+  const dateStr = `${month}/${day}/${year}, ${hour}:${minute}:00`;
+  
+  // Create a date from this string - it will be interpreted in the browser's local time
+  // But we need it to be interpreted in the user's configured timezone
+  
+  // The trick: format a known UTC time to see how it appears in the target timezone,
+  // then work backwards to find what UTC time would appear as our desired local time
+  
+  // Use a reference date
+  const referenceUTC = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
+  
+  // Format this UTC time to see what it looks like in the target timezone  
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const formattedInTz = formatter.format(referenceUTC);
+  
+  // Parse the formatted result to see what the UTC time looks like in the target timezone
+  const tzParts = formattedInTz.match(/(\d{2})\/(\d{2})\/(\d{4}),?\s*(\d{2}):(\d{2}):(\d{2})/);
+  if (!tzParts) {
+    return referenceUTC.toISOString();
+  }
+  
+  const [, tzMonth, tzDay, tzYear, tzHour, tzMinute] = tzParts;
+  
+  // Calculate the offset: how many milliseconds difference between 
+  // the UTC time and how it displays in the timezone
+  const utcMs = referenceUTC.getTime();
+  const tzDisplayMs = Date.UTC(parseInt(tzYear), parseInt(tzMonth) - 1, parseInt(tzDay), parseInt(tzHour), parseInt(tzMinute), 0);
+  const offsetMs = utcMs - tzDisplayMs;
+  
+  // Now apply this offset to get the correct UTC time
+  // We want: "year-month-day hour:minute" in timezone
+  // Which means: "year-month-day hour:minute" as UTC + offsetMs
+  const desiredLocalMs = Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+  const correctUtcMs = desiredLocalMs + offsetMs;
+  
+  return new Date(correctUtcMs).toISOString();
+}
+
+/**
+ * Add days to a UTC date string and return formatted string in user's timezone
+ */
 export function addDaysToDate(dateString: string, days: number): string {
-  const cleanString = dateString.replace('Z', '').replace(/\.\d{3}$/, '');
-  const date = new Date(cleanString);
-  date.setDate(date.getDate() + days);
-  // Return in ISO format without Z (keep as naive datetime)
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  const date = new Date(dateString); // Parse as UTC
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString();
 }
 
-// Calculate and format the time remaining between now and an end date
-// Returns a string with the two most significant time units
-// Examples: "8 days, 23 hours" or "23 hours, 30 minutes" or "1 minute, 57 seconds"
+/**
+ * Calculate and format the time remaining between now and an end date
+ * Returns a string with the two most significant time units
+ * Examples: "8 days, 23 hours" or "23 hours, 30 minutes" or "1 minute, 57 seconds"
+ */
 export function getTimeRemaining(endDateString: string): string {
-  const cleanString = endDateString.replace('Z', '').replace(/\.\d{3}$/, '');
-  const endDate = new Date(cleanString);
+  const endDate = new Date(endDateString); // Parse as UTC
   const now = new Date();
   
   const diffMs = endDate.getTime() - now.getTime();

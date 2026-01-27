@@ -11,8 +11,13 @@ const pool = new Pool({
   password: process.env.DATABASE_PASSWORD || 'mobsterverse_dev_password',
 });
 
+// Set timezone to UTC for all connections
+pool.on('connect', (client) => {
+  client.query('SET TIMEZONE="UTC"');
+});
+
 pool.on('connect', () => {
-  console.log('🔌 Connected to PostgreSQL database');
+  console.log('🔌 Connected to PostgreSQL database (UTC timezone)');
 });
 
 pool.on('error', (err) => {

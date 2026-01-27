@@ -60,8 +60,8 @@ export class GameRepository {
     const result = await this.pool.query(
       `SELECT * FROM games 
        WHERE status = 'active' 
-       AND (CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago') >= start_date 
-       AND (CURRENT_TIMESTAMP AT TIME ZONE 'America/Chicago') <= (start_date + (length_days || ' days')::INTERVAL)
+       AND CURRENT_TIMESTAMP >= start_date 
+       AND CURRENT_TIMESTAMP <= (start_date + (length_days || ' days')::INTERVAL)
        ORDER BY start_date DESC`
     );
     return result.rows;

@@ -50,8 +50,8 @@ export class AuthController {
       // Create user
       const passwordHash = await hashPassword(password);
       const verificationToken = generateVerificationToken();
-      const verificationExpires = new Date();
-      verificationExpires.setHours(verificationExpires.getHours() + 24);
+      // Create expiry time in UTC (24 hours from now)
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       const user = await userRepo.create({
         email,
@@ -213,8 +213,8 @@ export class AuthController {
       // Only send reset email for active accounts
       // Generate reset token
       const resetToken = generateResetToken();
-      const resetExpires = new Date();
-      resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
+      // Create expiry time in UTC (1 hour from now)
+      const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
 
       await userRepo.setResetToken(email, resetToken, resetExpires);
       await sendPasswordResetEmail(email, resetToken);

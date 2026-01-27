@@ -28,7 +28,10 @@ export default function AccountPage() {
         const response = await authAPI.getMe();
         setUser(response.user);
         setNickname(response.user.nickname || '');
-        setTimezone(response.user.timezone || getDefaultTimezone());
+        const userTz = response.user.timezone || getDefaultTimezone();
+        setTimezone(userTz);
+        // Save to localStorage for date conversion functions
+        localStorage.setItem('user_timezone', userTz);
       } catch (error) {
         router.push('/login');
       } finally {
@@ -83,6 +86,8 @@ export default function AccountPage() {
     }
     try {
       await authAPI.updateTimezone(timezone);
+      // Save to localStorage for date conversion functions
+      localStorage.setItem('user_timezone', timezone);
       setUser(prev => prev ? { ...prev, timezone } : null);
       setEditingTimezone(false);
       setTimezoneSuccess(true);

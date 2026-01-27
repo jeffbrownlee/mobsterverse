@@ -70,8 +70,14 @@ export default function AdminGamesPage() {
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Send the datetime-local value directly - it's already in the format we want
-      await gameAPI.createGame(formData);
+      // Convert local datetime to UTC before sending
+      const { localDateTimeToUTC } = await import('@/lib/dateUtils');
+      const utcStartDate = localDateTimeToUTC(formData.start_date);
+      
+      await gameAPI.createGame({
+        ...formData,
+        start_date: utcStartDate
+      });
       setShowCreateForm(false);
       setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
       await loadGames();
@@ -86,8 +92,14 @@ export default function AdminGamesPage() {
     if (!editingGame) return;
     
     try {
-      // Send the datetime-local value directly - it's already in the format we want
-      await gameAPI.updateGame(editingGame.id, formData);
+      // Convert local datetime to UTC before sending
+      const { localDateTimeToUTC } = await import('@/lib/dateUtils');
+      const utcStartDate = localDateTimeToUTC(formData.start_date);
+      
+      await gameAPI.updateGame(editingGame.id, {
+        ...formData,
+        start_date: utcStartDate
+      });
       setEditingGame(null);
       setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
       await loadGames();

@@ -5,14 +5,14 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   email_verified BOOLEAN DEFAULT FALSE,
   verification_token VARCHAR(255),
-  verification_token_expires TIMESTAMP,
+  verification_token_expires TIMESTAMPTZ,
   reset_token VARCHAR(255),
-  reset_token_expires TIMESTAMP,
+  reset_token_expires TIMESTAMPTZ,
   mfa_enabled BOOLEAN DEFAULT FALSE,
   mfa_secret VARCHAR(255),
   turns INTEGER DEFAULT 0 NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on email for faster lookups
@@ -23,11 +23,11 @@ CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users(reset_token);
 -- Games table
 CREATE TABLE IF NOT EXISTS games (
   id SERIAL PRIMARY KEY,
-  start_date TIMESTAMP NOT NULL,
+  start_date TIMESTAMPTZ NOT NULL,
   length_days INTEGER NOT NULL,
   status VARCHAR(50) NOT NULL CHECK (status IN ('active', 'closing', 'complete')),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create index on status for faster queries
