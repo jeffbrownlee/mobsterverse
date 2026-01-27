@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, User, gameAPI, Game, Player } from '@/lib/api';
+import { authAPI, User, gameAPI, Game, Player, PlayerWithUserInfo } from '@/lib/api';
 import JoinGameDialog from '@/components/JoinGameDialog';
 import { formatDateNoTZ, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
 import { useGame } from '@/contexts/GameContext';
@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const [upcomingGames, setUpcomingGames] = useState<Game[]>([]);
   const [myGames, setMyGames] = useState<Array<Game & { player: Player }>>([]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
-  const [playersByGame, setPlayersByGame] = useState<Map<number, Player>>(new Map());
+  const [playersByGame, setPlayersByGame] = useState<Map<number, PlayerWithUserInfo>>(new Map());
   const router = useRouter();
   const { setCurrentGame } = useGame();
 
@@ -35,12 +35,22 @@ export default function DashboardPage() {
         setMyGames(myGamesResponse.games);
 
         // Build a map of game IDs to player objects
-        const playerMap = new Map<number, Player>();
-        myGamesResponse.games.forEach((game) => {
+        // Fetch detailed player info for each game to get location
+        const playerMap = new Map<number, PlayerWithUserInfo>();
+        for (const game of myGamesResponse.games) {
           if (game.player) {
-            playerMap.set(game.id, game.player);
+            try {
+              const playerResponse = await gameAPI.getMyPlayer(game.id);
+              const playersResponse = await gameAPI.getGamePlayers(game.id);
+              const detailedPlayer = playersResponse.players.find(p => p.id === playerResponse.player.id);
+              if (detailedPlayer) {
+                playerMap.set(game.id, detailedPlayer);
+              }
+            } catch (err) {
+              console.error(`Failed to fetch player details for game ${game.id}:`, err);
+            }
           }
-        });
+        }
         setPlayersByGame(playerMap);
       } catch (error) {
         router.push('/login');
@@ -62,13 +72,28 @@ export default function DashboardPage() {
   };
 
   const handleJoinSuccess = (player: Player) => {
-    // Add the player to the map
-    setPlayersByGame(new Map(playersByGame).set(selectedGame!.id, player));
+    // Refresh the game lists to get updated player info
     setSelectedGame(null);
     
-    // Optionally refresh the game lists
-    gameAPI.getMyGames().then((response) => {
+    gameAPI.getMyGames().then(async (response) => {
       setMyGames(response.games);
+      
+      // Refresh player map with detailed info
+      const playerMap = new Map<number, PlayerWithUserInfo>();
+      for (const game of response.games) {
+        if (game.player) {
+          try {
+            const playersResponse = await gameAPI.getGamePlayers(game.id);
+            const detailedPlayer = playersResponse.players.find(p => p.user_id === user?.id);
+            if (detailedPlayer) {
+              playerMap.set(game.id, detailedPlayer);
+            }
+          } catch (err) {
+            console.error(`Failed to fetch player details for game ${game.id}:`, err);
+          }
+        }
+      }
+      setPlayersByGame(playerMap);
     });
   };
 
@@ -133,6 +158,14 @@ export default function DashboardPage() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
+                          {isPlayerInGame(game.id) && (
+                            <>
+                              <p><strong>Playing as:</strong> {playersByGame.get(game.id)?.name}</p>
+                              {playersByGame.get(game.id)?.location_name && (
+                                <p><strong>Location:</strong> {playersByGame.get(game.id)?.location_name}</p>
+                              )}
+                            </>
+                          )}
                           <p><strong>Started:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
                           <p><strong>Ends:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
@@ -177,7 +210,12 @@ export default function DashboardPage() {
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
                           {isPlayerInGame(game.id) && (
-                            <p><strong>Playing as:</strong> {playersByGame.get(game.id)?.name}</p>
+                            <>
+                              <p><strong>Playing as:</strong> {playersByGame.get(game.id)?.name}</p>
+                              {playersByGame.get(game.id)?.location_name && (
+                                <p><strong>Location:</strong> {playersByGame.get(game.id)?.location_name}</p>
+                              )}
+                            </>
                           )}
                           <p><strong>Starts:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>

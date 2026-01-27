@@ -30,7 +30,7 @@ export class GameController {
   // Create a new game (admin only)
   createGame = async (req: Request, res: Response) => {
     try {
-      const { start_date, length_days, status } = req.body;
+      const { start_date, length_days, status, location_set_id } = req.body;
 
       if (!start_date || !length_days || !status) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -41,6 +41,10 @@ export class GameController {
         length_days: parseInt(length_days),
         status,
       };
+
+      if (location_set_id !== undefined && location_set_id !== null && location_set_id !== '') {
+        gameData.location_set_id = parseInt(location_set_id);
+      }
 
       const game = await gameRepository.create(gameData);
       res.status(201).json({ game });
@@ -100,7 +104,7 @@ export class GameController {
   updateGame = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id as string);
-      const { start_date, length_days, status } = req.body;
+      const { start_date, length_days, status, location_set_id } = req.body;
 
       const updateData: GameUpdateData = {};
 
@@ -112,6 +116,9 @@ export class GameController {
       }
       if (status !== undefined) {
         updateData.status = status;
+      }
+      if (location_set_id !== undefined) {
+        updateData.location_set_id = location_set_id === '' || location_set_id === null ? null : parseInt(location_set_id);
       }
 
       const game = await gameRepository.update(id, updateData);
@@ -148,7 +155,7 @@ export class GameController {
   joinGame = async (req: Request, res: Response) => {
     try {
       const gameId = parseInt(req.params.id as string);
-      const { name } = req.body;
+      const { name, location_id } = req.body;
       const userId = (req as any).userId;
 
       if (!userId) {
@@ -187,6 +194,10 @@ export class GameController {
         user_id: userId,
         name: name.trim(),
       };
+
+      if (location_id !== undefined && location_id !== null && location_id !== '') {
+        playerData.location_id = parseInt(location_id);
+      }
 
       const player = await playerRepository.create(playerData);
       res.status(201).json({ player, message: 'Successfully joined the game' });

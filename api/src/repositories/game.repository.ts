@@ -6,10 +6,10 @@ export class GameRepository {
 
   async create(data: GameCreateData): Promise<Game> {
     const result = await this.pool.query(
-      `INSERT INTO games (start_date, length_days, status, updated_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      `INSERT INTO games (start_date, length_days, status, location_set_id, updated_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
        RETURNING *`,
-      [data.start_date, data.length_days, data.status]
+      [data.start_date, data.length_days, data.status, data.location_set_id || null]
     );
     return result.rows[0];
   }
@@ -76,6 +76,11 @@ export class GameRepository {
     if (data.status !== undefined) {
       updates.push(`status = $${paramCount++}`);
       values.push(data.status);
+    }
+
+    if (data.location_set_id !== undefined) {
+      updates.push(`location_set_id = $${paramCount++}`);
+      values.push(data.location_set_id);
     }
 
     if (updates.length === 0) {

@@ -3,19 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, User, gameAPI, Game, GameStatus } from '@/lib/api';
+import { authAPI, User, gameAPI, Game, GameStatus, locationAPI, LocationSetWithLocations } from '@/lib/api';
 import { toDateTimeLocal, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
 
 export default function AdminGamesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [games, setGames] = useState<Game[]>([]);
+  const [locationSets, setLocationSets] = useState<LocationSetWithLocations[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [formData, setFormData] = useState({
     start_date: '',
     length_days: 7,
     status: 'active' as GameStatus,
+    location_set_id: undefined as number | undefined,
   });
   const router = useRouter();
 
@@ -31,7 +33,7 @@ export default function AdminGamesPage() {
         }
         
         setUser(response.user);
-        await loadGames();
+        await Promise.all([loadGames(), loadLocationSets()]);
       } catch (error) {
         router.push('/login');
       } finally {
@@ -51,6 +53,15 @@ export default function AdminGamesPage() {
     }
   };
 
+  const loadLocationSets = async () => {
+    try {
+      const response = await locationAPI.getAllLocationSets();
+      setLocationSets(response.locationSets);
+    } catch (error) {
+      console.error('Failed to load location sets:', error);
+    }
+  };
+
   const handleLogout = () => {
     authAPI.logout();
     router.push('/login');
@@ -62,7 +73,7 @@ export default function AdminGamesPage() {
       // Send the datetime-local value directly - it's already in the format we want
       await gameAPI.createGame(formData);
       setShowCreateForm(false);
-      setFormData({ start_date: '', length_days: 7, status: 'active' });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
       await loadGames();
     } catch (error) {
       console.error('Failed to create game:', error);
@@ -78,7 +89,7 @@ export default function AdminGamesPage() {
       // Send the datetime-local value directly - it's already in the format we want
       await gameAPI.updateGame(editingGame.id, formData);
       setEditingGame(null);
-      setFormData({ start_date: '', length_days: 7, status: 'active' });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
       await loadGames();
     } catch (error) {
       console.error('Failed to update game:', error);
@@ -104,6 +115,7 @@ export default function AdminGamesPage() {
       start_date: toDateTimeLocal(game.start_date),
       length_days: game.length_days,
       status: game.status,
+      location_set_id: game.location_set_id || undefined,
     });
     setShowCreateForm(false);
   };
@@ -111,7 +123,7 @@ export default function AdminGamesPage() {
   const cancelEdit = () => {
     setEditingGame(null);
     setShowCreateForm(false);
-    setFormData({ start_date: '', length_days: 7, status: 'active' });
+    setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
   };
 
   if (loading || !user) {
@@ -180,7 +192,7 @@ export default function AdminGamesPage() {
                   {editingGame ? 'Edit Game' : 'Create New Game'}
                 </h3>
                 <form onSubmit={editingGame ? handleUpdateGame : handleCreateGame}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Start Date
@@ -218,6 +230,23 @@ export default function AdminGamesPage() {
                         <option value="active">Active</option>
                         <option value="closing">Closing</option>
                         <option value="complete">Complete</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Location Set
+                      </label>
+                      <select
+                        value={formData.location_set_id || ''}
+                        onChange={(e) => setFormData({ ...formData, location_set_id: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">No Location Set</option>
+                        {locationSets.map((set) => (
+                          <option key={set.id} value={set.id}>
+                            {set.name} ({set.locations.length} locations)
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -263,6 +292,7 @@ export default function AdminGamesPage() {
                           <p><strong>Start Date:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
                           <p><strong>End Date:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
+                          <p><strong>Location Set:</strong> {game.location_set_id ? locationSets.find(s => s.id === game.location_set_id)?.name || 'Unknown' : 'None'}</p>
                           <p><strong>Created:</strong> {formatDateTimeNoTZ(game.created_at)}</p>
                         </div>
                       </div>

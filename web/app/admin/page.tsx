@@ -96,6 +96,15 @@ export default function AdminPage() {
                 <div className="text-blue-600 font-medium">Manage Users →</div>
               </Link>
 
+              {/* Location Management */}
+              <Link href="/admin/locations" className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Location Management</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Manage locations and location sets
+                </p>
+                <div className="text-blue-600 font-medium">Manage Locations →</div>
+              </Link>
+
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { gameAPI, Game, Player } from '@/lib/api';
+import { gameAPI, Game, Player, locationAPI, Location } from '@/lib/api';
 
 interface JoinGameDialogProps {
   game: Game;
@@ -12,7 +12,10 @@ interface JoinGameDialogProps {
 
 export default function JoinGameDialog({ game, userNickname, onClose, onSuccess }: JoinGameDialogProps) {
   const [playerName, setPlayerName] = useState(userNickname || '');
+  const [selectedLocationId, setSelectedLocationId] = useState<number | undefined>(undefined);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -20,7 +23,26 @@ export default function JoinGameDialog({ game, userNickname, onClose, onSuccess 
     if (userNickname) {
       setPlayerName(userNickname);
     }
-  }, [userNickname]);
+
+    // Load locations if game has a location set
+    if (game.location_set_id) {
+      loadLocations();
+    }
+  }, [userNickname, game.location_set_id]);
+
+  const loadLocations = async () => {
+    if (!game.location_set_id) return;
+    
+    setLoadingLocations(true);
+    try {
+      const response = await locationAPI.getLocationSet(game.location_set_id);
+      setLocations(response.locationSet.locations);
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +62,13 @@ export default function JoinGameDialog({ game, userNickname, onClose, onSuccess 
         return;
       }
 
-      const response = await gameAPI.joinGame(game.id, playerName.trim());
+      if (game.location_set_id && !selectedLocationId) {
+        setError('Please select a location');
+        setLoading(false);
+        return;
+      }
+
+      const response = await gameAPI.joinGame(game.id, playerName.trim(), selectedLocationId);
       onSuccess(response.player);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to join game');
@@ -81,6 +109,37 @@ export default function JoinGameDialog({ game, userNickname, onClose, onSuccess 
               This is the name other players will see in this game round.
             </p>
           </div>
+
+          {game.location_set_id && (
+            <div className="mb-4">
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                Your Location
+              </label>
+              {loadingLocations ? (
+                <p className="text-sm text-gray-500">Loading locations...</p>
+              ) : (
+                <>
+                  <select
+                    id="location"
+                    value={selectedLocationId || ''}
+                    onChange={(e) => setSelectedLocationId(e.target.value ? parseInt(e.target.value) : undefined)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  >
+                    <option value="">Select a location</option>
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose where you'll be playing from.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

@@ -49,6 +49,7 @@ export interface Game {
   start_date: string;
   length_days: number;
   status: GameStatus;
+  location_set_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,12 +58,14 @@ export interface GameCreateData {
   start_date: string;
   length_days: number;
   status: GameStatus;
+  location_set_id?: number;
 }
 
 export interface GameUpdateData {
   start_date?: string;
   length_days?: number;
   status?: GameStatus;
+  location_set_id?: number;
 }
 
 export interface Player {
@@ -70,6 +73,7 @@ export interface Player {
   game_id: number;
   user_id: string;
   name: string;
+  location_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +83,27 @@ export interface PlayerWithUserInfo extends Player {
   nickname: string | null;
   status: string;
   level: string;
+  location_name?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface Location {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  created_at?: string;
+}
+
+export interface LocationSet {
+  id: number;
+  name: string;
+  created_at?: string;
+}
+
+export interface LocationSetWithLocations extends LocationSet {
+  locations: Location[];
 }
 
 export const authAPI = {
@@ -200,8 +225,8 @@ export const gameAPI = {
   },
 
   // Join a game
-  joinGame: async (id: number, name: string): Promise<{ player: Player; message: string }> => {
-    const response = await api.post(`/api/game/${id}/join`, { name });
+  joinGame: async (id: number, name: string, location_id?: number): Promise<{ player: Player; message: string }> => {
+    const response = await api.post(`/api/game/${id}/join`, { name, location_id });
     return response.data;
   },
 
@@ -240,6 +265,26 @@ export const userAPI = {
   updateUser: async (userId: string, data: UserUpdateData): Promise<{ user: User }> => {
     const response = await api.put(`/api/admin/users/${userId}`, data);
     return response.data;
+  },
+};
+
+export const locationAPI = {
+  // Get all locations
+  getAllLocations: async (): Promise<{ locations: Location[] }> => {
+    const response = await api.get('/api/locations');
+    return { locations: response.data };
+  },
+
+  // Get all location sets with their locations
+  getAllLocationSets: async (): Promise<{ locationSets: LocationSetWithLocations[] }> => {
+    const response = await api.get('/api/location-sets');
+    return { locationSets: response.data };
+  },
+
+  // Get a single location set with its locations
+  getLocationSet: async (id: number): Promise<{ locationSet: LocationSetWithLocations }> => {
+    const response = await api.get(`/api/location-sets/${id}`);
+    return { locationSet: response.data };
   },
 };
 

@@ -46,6 +46,9 @@ export default function GamePage() {
                   <p><strong>Game Number:</strong> {currentGame.id}</p>
                   <p><strong>Player ID:</strong> {currentPlayer.id}</p>
                   <p><strong>Player Name:</strong> {currentPlayer.name}</p>
+                  {'location_name' in currentPlayer && currentPlayer.location_name && (
+                    <p><strong>Your Location:</strong> {currentPlayer.location_name}</p>
+                  )}
                   <p><strong>Status:</strong> <span className="capitalize">{currentGame.status}</span></p>
                   <p><strong>Duration:</strong> {currentGame.length_days} days</p>
                   <p><strong>Started:</strong> {formatDateTimeNoTZ(currentGame.start_date)}</p>

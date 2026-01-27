@@ -6,10 +6,10 @@ export class PlayerRepository {
 
   async create(data: PlayerCreateData): Promise<Player> {
     const result = await this.pool.query(
-      `INSERT INTO players (game_id, user_id, name, updated_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      `INSERT INTO players (game_id, user_id, name, location_id, updated_at)
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
        RETURNING *`,
-      [data.game_id, data.user_id, data.name]
+      [data.game_id, data.user_id, data.name, data.location_id || null]
     );
     return result.rows[0];
   }
@@ -45,14 +45,19 @@ export class PlayerRepository {
         p.game_id,
         p.user_id,
         p.name,
+        p.location_id,
         p.created_at,
         p.updated_at,
         u.email,
         u.nickname,
         u.status,
-        u.level
+        u.level,
+        l.name as location_name,
+        l.latitude,
+        l.longitude
        FROM players p
        JOIN users u ON p.user_id = u.id
+       LEFT JOIN locations l ON p.location_id = l.id
        WHERE p.game_id = $1
        ORDER BY p.created_at ASC`,
       [gameId]
@@ -84,6 +89,11 @@ export class PlayerRepository {
     if (data.name !== undefined) {
       updates.push(`name = $${paramCount++}`);
       values.push(data.name);
+    }
+
+    if (data.location_id !== undefined) {
+      updates.push(`location_id = $${paramCount++}`);
+      values.push(data.location_id);
     }
 
     if (updates.length === 0) {
