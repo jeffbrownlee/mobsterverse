@@ -298,7 +298,7 @@ export default function AdminLocationsPage() {
                         type="text"
                         value={locationFormData.name}
                         onChange={(e) => setLocationFormData({ ...locationFormData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                         placeholder="e.g., Paris"
                       />
@@ -312,7 +312,7 @@ export default function AdminLocationsPage() {
                         step="0.000001"
                         value={locationFormData.latitude}
                         onChange={(e) => setLocationFormData({ ...locationFormData, latitude: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                         placeholder="e.g., 48.8566"
                       />
@@ -326,7 +326,7 @@ export default function AdminLocationsPage() {
                         step="0.000001"
                         value={locationFormData.longitude}
                         onChange={(e) => setLocationFormData({ ...locationFormData, longitude: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         required
                         placeholder="e.g., 2.3522"
                       />
@@ -410,7 +410,7 @@ export default function AdminLocationsPage() {
                       type="text"
                       value={setFormData.name}
                       onChange={(e) => setSetFormData({ ...setFormData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                       placeholder="e.g., Asian Cities"
                     />
