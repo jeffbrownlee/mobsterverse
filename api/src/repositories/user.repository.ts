@@ -165,6 +165,19 @@ export class UserRepository {
     return result.rows[0] || null;
   }
 
+  async updateTurns(userId: string, turnsDelta: number): Promise<User | null> {
+    const query = `
+      UPDATE users 
+      SET turns = turns + $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [turnsDelta, userId]);
+    return result.rows[0] || null;
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
@@ -174,7 +187,7 @@ export class UserRepository {
       nickname: user.nickname,
       status: user.status,
       level: user.level,
-      user_turns: user.user_turns,
+      turns: user.turns,
       created_at: user.created_at,
     };
   }

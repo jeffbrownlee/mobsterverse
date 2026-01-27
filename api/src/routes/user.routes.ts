@@ -14,4 +14,8 @@ router.put('/admin/users/:userId', authenticate, requireAdmin, (req, res) =>
   userController.updateUser(req, res)
 );
 
+router.put('/admin/users/:userId/turns', authenticate, requireAdmin, (req, res) => 
+  userController.updateUserTurns(req, res)
+);
+
 export default router;

@@ -41,6 +41,7 @@ export interface User {
   nickname: string | null;
   status: UserStatus;
   level: UserLevel;
+  turns: number;
   created_at: string;
 }
 
@@ -74,6 +75,9 @@ export interface Player {
   user_id: string;
   name: string;
   location_id: number | null;
+  turns_active: number;
+  turns_reserve: number;
+  turns_transferred: number;
   created_at: string;
   updated_at: string;
 }
@@ -83,6 +87,7 @@ export interface PlayerWithUserInfo extends Player {
   nickname: string | null;
   status: string;
   level: string;
+  turns: number;
   location_name?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -264,6 +269,12 @@ export const userAPI = {
   // Admin: Update a user
   updateUser: async (userId: string, data: UserUpdateData): Promise<{ user: User }> => {
     const response = await api.put(`/api/admin/users/${userId}`, data);
+    return response.data;
+  },
+
+  // Admin: Update user turns
+  updateUserTurns: async (userId: string, turnsDelta: number): Promise<{ user: User }> => {
+    const response = await api.put(`/api/admin/users/${userId}/turns`, { turnsDelta });
     return response.data;
   },
 };

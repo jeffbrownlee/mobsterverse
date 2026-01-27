@@ -14,6 +14,7 @@ export default function AdminUsersPage() {
     level: 'user' as UserLevel,
     status: 'active' as UserStatus,
   });
+  const [turnsInput, setTurnsInput] = useState<Record<string, string>>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -83,6 +84,29 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error('Failed to update user:', error);
       alert('Failed to update user');
+    }
+  };
+
+  const handleUpdateTurns = async (userId: string) => {
+    const input = turnsInput[userId];
+    if (!input || input.trim() === '') {
+      alert('Please enter a number');
+      return;
+    }
+    
+    const delta = parseInt(input, 10);
+    if (isNaN(delta)) {
+      alert('Please enter a valid number');
+      return;
+    }
+    
+    try {
+      await userAPI.updateUserTurns(userId, delta);
+      setTurnsInput({ ...turnsInput, [userId]: '' });
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to update turns:', error);
+      alert('Failed to update turns');
     }
   };
 
@@ -221,10 +245,11 @@ export default function AdminUsersPage() {
                           <p><strong>Nickname:</strong> {user.nickname || 'Not set'}</p>
                           <p><strong>Email Verified:</strong> {user.email_verified ? 'Yes' : 'No'}</p>
                           <p><strong>MFA Enabled:</strong> {user.mfa_enabled ? 'Yes' : 'No'}</p>
+                          <p><strong>Turns:</strong> {user.turns}</p>
                           <p><strong>Created:</strong> {new Date(user.created_at).toLocaleString()}</p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         <button
                           onClick={() => startEdit(user)}
                           className="px-3 py-1 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
@@ -232,6 +257,27 @@ export default function AdminUsersPage() {
                         >
                           Edit
                         </button>
+                        <div className="flex gap-1">
+                          <input
+                            type="number"
+                            value={turnsInput[user.id] || ''}
+                            onChange={(e) => setTurnsInput({ ...turnsInput, [user.id]: e.target.value })}
+                            placeholder="+/- turns"
+                            className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleUpdateTurns(user.id);
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => handleUpdateTurns(user.id)}
+                            className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                            title="Update turns"
+                          >
+                            Update
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

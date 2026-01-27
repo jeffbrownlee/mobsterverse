@@ -1,19 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
 import { formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
+import { authAPI, User } from '@/lib/api';
 
 export default function GamePage() {
   const { currentGame, currentPlayer, setCurrentGame } = useGame();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     // Redirect to dashboard if no game is selected
     if (!currentGame || !currentPlayer) {
       router.push('/dashboard');
+      return;
     }
+
+    // Fetch current user data
+    const fetchUser = async () => {
+      try {
+        const response = await authAPI.getMe();
+        setCurrentUser(response.user);
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+
+    fetchUser();
   }, [currentGame, currentPlayer, router]);
 
   const handleLeaveGame = () => {
@@ -40,6 +55,16 @@ export default function GamePage() {
 
           <div className="border-t border-gray-200 pt-6">
             <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Turn Information</h2>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <p><strong>User Turns:</strong> {currentUser?.turns ?? 'Loading...'}</p>
+                  <p><strong>Active Turns:</strong> {currentPlayer.turns_active}</p>
+                  <p><strong>Reserve Turns:</strong> {currentPlayer.turns_reserve}</p>
+                  <p><strong>Total Transferred:</strong> {currentPlayer.turns_transferred}</p>
+                </div>
+              </div>
+
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">Game Information</h2>
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2">

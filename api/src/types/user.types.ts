@@ -15,7 +15,7 @@ export interface User {
   nickname: string | null;
   status: UserStatus;
   level: UserLevel;
-  user_turns: number;
+  turns: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -35,7 +35,7 @@ export interface UserResponse {
   nickname: string | null;
   status: UserStatus;
   level: UserLevel;
-  user_turns: number;
+  turns: number;
   created_at: Date;
 }
 

@@ -55,4 +55,29 @@ export class UserController {
       res.status(500).json({ error: 'Failed to update user' });
     }
   }
+
+  async updateUserTurns(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.params.userId as string;
+      const { turnsDelta } = req.body;
+
+      // Validate turnsDelta
+      if (typeof turnsDelta !== 'number' || !Number.isInteger(turnsDelta)) {
+        res.status(400).json({ error: 'turnsDelta must be an integer' });
+        return;
+      }
+
+      const user = await userRepository.updateTurns(userId, turnsDelta);
+      
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      res.json({ user: userRepository.toUserResponse(user) });
+    } catch (error) {
+      console.error('Error updating user turns:', error);
+      res.status(500).json({ error: 'Failed to update user turns' });
+    }
+  }
 }
