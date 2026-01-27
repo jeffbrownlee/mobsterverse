@@ -185,3 +185,49 @@ export function getTimeRemaining(endDateString: string): string {
   // Return the two most significant units
   return units.slice(0, 2).join(', ');
 }
+
+/**
+ * Calculate and format relative time from a date to now
+ * Returns a string like "started 3 days, 4 hours ago" or "starting in 2 days, 12 hours"
+ */
+export function getRelativeTime(dateString: string, context: 'started' | 'starting' | 'ended' | 'ending'): string {
+  const date = new Date(dateString); // Parse as UTC
+  const now = new Date();
+  
+  const diffMs = date.getTime() - now.getTime();
+  const absDiffMs = Math.abs(diffMs);
+  const isPast = diffMs < 0;
+  
+  // Calculate time units
+  const seconds = Math.floor(absDiffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  // Calculate remainders
+  const remainingSeconds = seconds % 60;
+  const remainingMinutes = minutes % 60;
+  const remainingHours = hours % 24;
+  
+  // Helper function to format a time unit with proper singular/plural
+  const formatUnit = (value: number, unit: string): string => {
+    return `${value} ${unit}${value !== 1 ? 's' : ''}`;
+  };
+  
+  // Build array of non-zero units
+  const units: string[] = [];
+  if (days > 0) units.push(formatUnit(days, 'day'));
+  if (remainingHours > 0) units.push(formatUnit(remainingHours, 'hour'));
+  if (remainingMinutes > 0) units.push(formatUnit(remainingMinutes, 'minute'));
+  if (remainingSeconds > 0 && days === 0 && remainingHours === 0) units.push(formatUnit(remainingSeconds, 'second'));
+  
+  // Get the two most significant units
+  const timeStr = units.slice(0, 2).join(', ') || '0 seconds';
+  
+  // Format based on context and whether it's past or future
+  if (isPast) {
+    return `${context.charAt(0).toUpperCase() + context.slice(1)} ${timeStr} ago`;
+  } else {
+    return `${context.charAt(0).toUpperCase() + context.slice(1)} in ${timeStr}`;
+  }
+}

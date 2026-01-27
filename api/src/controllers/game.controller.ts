@@ -30,7 +30,7 @@ export class GameController {
   // Create a new game (admin only)
   createGame = async (req: Request, res: Response) => {
     try {
-      const { start_date, length_days, status, location_set_id } = req.body;
+      const { start_date, length_days, status, location_set_id, starting_reserve, starting_bank } = req.body;
 
       if (!start_date || !length_days || !status) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -40,6 +40,8 @@ export class GameController {
         start_date: new Date(start_date),
         length_days: parseInt(length_days),
         status,
+        starting_reserve: starting_reserve !== undefined ? parseInt(starting_reserve) : 25000,
+        starting_bank: starting_bank !== undefined ? parseInt(starting_bank) : 5000000,
       };
 
       if (location_set_id !== undefined && location_set_id !== null && location_set_id !== '') {
@@ -58,7 +60,16 @@ export class GameController {
   getAllGames = async (req: Request, res: Response) => {
     try {
       const games = await gameRepository.findAll();
-      res.json({ games });
+      
+      // Add player count to each game
+      const gamesWithPlayerCount = await Promise.all(
+        games.map(async (game) => {
+          const playerCount = await playerRepository.countByGame(game.id);
+          return { ...game, player_count: playerCount };
+        })
+      );
+      
+      res.json({ games: gamesWithPlayerCount });
     } catch (error) {
       console.error('Get all games error:', error);
       res.status(500).json({ error: 'Failed to fetch games' });
@@ -104,7 +115,24 @@ export class GameController {
   updateGame = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id as string);
-      const { start_date, length_days, status, location_set_id } = req.body;
+      const { start_date, length_days, status, location_set_id, starting_reserve, starting_bank } = req.body;
+
+      // Check if game has players
+      const playerCount = await playerRepository.countByGame(id);
+      const hasPlayers = playerCount > 0;
+
+      // Prevent updating certain fields if players have joined
+      if (hasPlayers) {
+        if (location_set_id !== undefined) {
+          return res.status(400).json({ error: 'Cannot change location set after players have joined the game' });
+        }
+        if (starting_reserve !== undefined) {
+          return res.status(400).json({ error: 'Cannot change starting reserve after players have joined the game' });
+        }
+        if (starting_bank !== undefined) {
+          return res.status(400).json({ error: 'Cannot change starting bank after players have joined the game' });
+        }
+      }
 
       const updateData: GameUpdateData = {};
 
@@ -117,8 +145,14 @@ export class GameController {
       if (status !== undefined) {
         updateData.status = status;
       }
-      if (location_set_id !== undefined) {
+      if (location_set_id !== undefined && !hasPlayers) {
         updateData.location_set_id = location_set_id === '' || location_set_id === null ? null : parseInt(location_set_id);
+      }
+      if (starting_reserve !== undefined && !hasPlayers) {
+        updateData.starting_reserve = parseInt(starting_reserve);
+      }
+      if (starting_bank !== undefined && !hasPlayers) {
+        updateData.starting_bank = parseInt(starting_bank);
       }
 
       const game = await gameRepository.update(id, updateData);

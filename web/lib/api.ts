@@ -53,8 +53,11 @@ export interface Game {
   length_days: number;
   status: GameStatus;
   location_set_id: number | null;
+  starting_reserve: number;
+  starting_bank: number;
   created_at: string;
   updated_at: string;
+  player_count?: number;
 }
 
 export interface GameCreateData {
@@ -62,6 +65,8 @@ export interface GameCreateData {
   length_days: number;
   status: GameStatus;
   location_set_id?: number;
+  starting_reserve: number;
+  starting_bank: number;
 }
 
 export interface GameUpdateData {
@@ -69,6 +74,8 @@ export interface GameUpdateData {
   length_days?: number;
   status?: GameStatus;
   location_set_id?: number;
+  starting_reserve?: number;
+  starting_bank?: number;
 }
 
 export interface Player {

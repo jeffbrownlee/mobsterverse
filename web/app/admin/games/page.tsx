@@ -18,6 +18,8 @@ export default function AdminGamesPage() {
     length_days: 7,
     status: 'active' as GameStatus,
     location_set_id: undefined as number | undefined,
+    starting_reserve: 25000,
+    starting_bank: 5000000,
   });
   const router = useRouter();
 
@@ -79,7 +81,7 @@ export default function AdminGamesPage() {
         start_date: utcStartDate
       });
       setShowCreateForm(false);
-      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
       await loadGames();
     } catch (error) {
       console.error('Failed to create game:', error);
@@ -101,7 +103,7 @@ export default function AdminGamesPage() {
         start_date: utcStartDate
       });
       setEditingGame(null);
-      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
       await loadGames();
     } catch (error) {
       console.error('Failed to update game:', error);
@@ -128,6 +130,8 @@ export default function AdminGamesPage() {
       length_days: game.length_days,
       status: game.status,
       location_set_id: game.location_set_id || undefined,
+      starting_reserve: game.starting_reserve,
+      starting_bank: game.starting_bank,
     });
     setShowCreateForm(false);
   };
@@ -135,7 +139,7 @@ export default function AdminGamesPage() {
   const cancelEdit = () => {
     setEditingGame(null);
     setShowCreateForm(false);
-    setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined });
+    setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
   };
 
   if (loading || !user) {
@@ -247,11 +251,17 @@ export default function AdminGamesPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Location Set
+                        {editingGame && editingGame.player_count && editingGame.player_count > 0 && (
+                          <span className="ml-2 text-xs text-gray-500">(locked - {editingGame.player_count} player{editingGame.player_count !== 1 ? 's' : ''} joined)</span>
+                        )}
                       </label>
                       <select
                         value={formData.location_set_id || ''}
                         onChange={(e) => setFormData({ ...formData, location_set_id: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          !!(editingGame && editingGame.player_count && editingGame.player_count > 0) ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                        disabled={!!(editingGame && editingGame.player_count && editingGame.player_count > 0)}
                       >
                         <option value="">No Location Set</option>
                         {locationSets.map((set) => (
@@ -260,6 +270,44 @@ export default function AdminGamesPage() {
                           </option>
                         ))}
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Starting Reserve Turns
+                        {editingGame && editingGame.player_count && editingGame.player_count > 0 && (
+                          <span className="ml-2 text-xs text-gray-500">(locked)</span>
+                        )}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.starting_reserve}
+                        onChange={(e) => setFormData({ ...formData, starting_reserve: parseInt(e.target.value) || 0 })}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          !!(editingGame && editingGame.player_count && editingGame.player_count > 0) ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                        required
+                        disabled={!!(editingGame && editingGame.player_count && editingGame.player_count > 0)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Starting Bank Money
+                        {editingGame && editingGame.player_count && editingGame.player_count > 0 && (
+                          <span className="ml-2 text-xs text-gray-500">(locked)</span>
+                        )}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.starting_bank}
+                        onChange={(e) => setFormData({ ...formData, starting_bank: parseInt(e.target.value) || 0 })}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          !!(editingGame && editingGame.player_count && editingGame.player_count > 0) ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                        required
+                        disabled={!!(editingGame && editingGame.player_count && editingGame.player_count > 0)}
+                      />
                     </div>
                   </div>
                   <div className="flex gap-3">
@@ -301,10 +349,12 @@ export default function AdminGamesPage() {
                           </span>
                         </div>
                         <div className="mt-2 text-sm text-gray-600 space-y-1">
-                          <p><strong>Start Date:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
-                          <p><strong>Duration:</strong> {game.length_days} days</p>
-                          <p><strong>End Date:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
                           <p><strong>Location Set:</strong> {game.location_set_id ? locationSets.find(s => s.id === game.location_set_id)?.name || 'Unknown' : 'None'}</p>
+                          <p><strong>Duration:</strong> {game.length_days} days</p>
+                          <p><strong>Starting Reserve:</strong> {game.starting_reserve.toLocaleString()} turns</p>
+                          <p><strong>Starting Bank:</strong> ${game.starting_bank.toLocaleString()}</p>
+                          <p><strong>Start Date:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
+                          <p><strong>End Date:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
                           <p><strong>Created:</strong> {formatDateTimeNoTZ(game.created_at)}</p>
                         </div>
                       </div>

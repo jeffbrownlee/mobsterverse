@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS games (
   start_date TIMESTAMPTZ NOT NULL,
   length_days INTEGER NOT NULL,
   status VARCHAR(50) NOT NULL CHECK (status IN ('active', 'closing', 'complete')),
+  starting_reserve INTEGER DEFAULT 25000 NOT NULL,
+  starting_bank INTEGER DEFAULT 5000000 NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

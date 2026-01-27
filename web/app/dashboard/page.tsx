@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, User, gameAPI, Game, Player, PlayerWithUserInfo } from '@/lib/api';
 import JoinGameDialog from '@/components/JoinGameDialog';
-import { formatDateNoTZ, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
+import { addDaysToDate, getRelativeTime } from '@/lib/dateUtils';
 import { useGame } from '@/contexts/GameContext';
 
 export default function DashboardPage() {
@@ -166,9 +166,9 @@ export default function DashboardPage() {
                               )}
                             </>
                           )}
-                          <p><strong>Started:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
-                          <p><strong>Ends:</strong> {formatDateTimeNoTZ(addDaysToDate(game.start_date, game.length_days))}</p>
+                          <p>{getRelativeTime(game.start_date, 'started')}</p>
+                          <p>{getRelativeTime(addDaysToDate(game.start_date, game.length_days), 'ending')}</p>
                         </div>
                       </div>
                       {isPlayerInGame(game.id) ? (
@@ -217,8 +217,8 @@ export default function DashboardPage() {
                               )}
                             </>
                           )}
-                          <p><strong>Starts:</strong> {formatDateTimeNoTZ(game.start_date)}</p>
                           <p><strong>Duration:</strong> {game.length_days} days</p>
+                          <p>{getRelativeTime(game.start_date, 'starting')}</p>
                         </div>
                       </div>
                       {isPlayerInGame(game.id) ? (

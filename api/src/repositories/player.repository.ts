@@ -7,11 +7,21 @@ export class PlayerRepository {
 
   async create(data: PlayerCreateData): Promise<Player> {
     const schemaName = getGameSchemaName(data.game_id);
+    
+    // Get the game to retrieve starting values
+    const gameResult = await this.pool.query(
+      'SELECT starting_reserve, starting_bank FROM games WHERE id = $1',
+      [data.game_id]
+    );
+    const game = gameResult.rows[0];
+    const startingReserve = game?.starting_reserve || 25000;
+    const startingBank = game?.starting_bank || 5000000;
+    
     const result = await this.pool.query(
-      `INSERT INTO ${schemaName}.players (user_id, name, location_id, updated_at)
-       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      `INSERT INTO ${schemaName}.players (user_id, name, location_id, turns_reserve, money_bank, updated_at)
+       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
        RETURNING *`,
-      [data.user_id, data.name, data.location_id || null]
+      [data.user_id, data.name, data.location_id || null, startingReserve, startingBank]
     );
     return { ...result.rows[0], game_id: data.game_id };
   }
@@ -40,6 +50,19 @@ export class PlayerRepository {
       `SELECT * FROM ${schemaName}.players ORDER BY created_at ASC`
     );
     return result.rows.map(row => ({ ...row, game_id: gameId }));
+  }
+
+  async countByGame(gameId: number): Promise<number> {
+    const schemaName = getGameSchemaName(gameId);
+    try {
+      const result = await this.pool.query(
+        `SELECT COUNT(*) as count FROM ${schemaName}.players`
+      );
+      return parseInt(result.rows[0].count);
+    } catch (error) {
+      // Schema might not exist yet
+      return 0;
+    }
   }
 
   async findByGameWithUserInfo(gameId: number): Promise<PlayerWithUserInfo[]> {
@@ -154,14 +177,6 @@ export class PlayerRepository {
       [userId]
     );
     return result.rowCount !== null && result.rowCount > 0;
-  }
-
-  async countByGame(gameId: number): Promise<number> {
-    const schemaName = getGameSchemaName(gameId);
-    const result = await this.pool.query(
-      `SELECT COUNT(*) as count FROM ${schemaName}.players`
-    );
-    return parseInt(result.rows[0].count);
   }
 }
 
