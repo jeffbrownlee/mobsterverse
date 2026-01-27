@@ -174,6 +174,7 @@ export class UserRepository {
       nickname: user.nickname,
       status: user.status,
       level: user.level,
+      user_turns: user.user_turns,
       created_at: user.created_at,
     };
   }
