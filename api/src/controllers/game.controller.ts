@@ -182,10 +182,10 @@ export class GameController {
         return res.status(400).json({ error: 'You have already joined this game', player: existingPlayer });
       }
 
-      // Check if the name is already taken by another user
-      const existingName = await playerRepository.findByName(name.trim());
+      // Check if the name is already taken in this game
+      const existingName = await playerRepository.findByName(gameId, name.trim());
       if (existingName && existingName.user_id !== userId) {
-        return res.status(400).json({ error: 'This player name is already reserved by another user. Please choose a different name.' });
+        return res.status(400).json({ error: 'This player name is already taken in this game. Please choose a different name.' });
       }
 
       // Create the player

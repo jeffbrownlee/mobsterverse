@@ -1,48 +1,52 @@
 import { Pool } from 'pg';
 import { Player, PlayerCreateData, PlayerUpdateData, PlayerWithUserInfo } from '../types/player.types';
+import { getGameSchemaName } from '../db/schema-manager';
 
 export class PlayerRepository {
   constructor(private pool: Pool) {}
 
   async create(data: PlayerCreateData): Promise<Player> {
+    const schemaName = getGameSchemaName(data.game_id);
     const result = await this.pool.query(
-      `INSERT INTO players (game_id, user_id, name, location_id, updated_at)
-       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+      `INSERT INTO ${schemaName}.players (user_id, name, location_id, updated_at)
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
        RETURNING *`,
-      [data.game_id, data.user_id, data.name, data.location_id || null]
+      [data.user_id, data.name, data.location_id || null]
     );
-    return result.rows[0];
+    return { ...result.rows[0], game_id: data.game_id };
   }
 
-  async findById(id: string): Promise<Player | null> {
+  async findById(gameId: number, id: string): Promise<Player | null> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'SELECT * FROM players WHERE id = $1',
+      `SELECT * FROM ${schemaName}.players WHERE id = $1`,
       [id]
     );
-    return result.rows[0] || null;
+    return result.rows[0] ? { ...result.rows[0], game_id: gameId } : null;
   }
 
   async findByGameAndUser(gameId: number, userId: string): Promise<Player | null> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'SELECT * FROM players WHERE game_id = $1 AND user_id = $2',
-      [gameId, userId]
+      `SELECT * FROM ${schemaName}.players WHERE user_id = $1`,
+      [userId]
     );
-    return result.rows[0] || null;
+    return result.rows[0] ? { ...result.rows[0], game_id: gameId } : null;
   }
 
   async findByGame(gameId: number): Promise<Player[]> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'SELECT * FROM players WHERE game_id = $1 ORDER BY created_at ASC',
-      [gameId]
+      `SELECT * FROM ${schemaName}.players ORDER BY created_at ASC`
     );
-    return result.rows;
+    return result.rows.map(row => ({ ...row, game_id: gameId }));
   }
 
   async findByGameWithUserInfo(gameId: number): Promise<PlayerWithUserInfo[]> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
       `SELECT 
         p.id,
-        p.game_id,
         p.user_id,
         p.name,
         p.location_id,
@@ -55,33 +59,49 @@ export class PlayerRepository {
         l.name as location_name,
         l.latitude,
         l.longitude
-       FROM players p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN locations l ON p.location_id = l.id
-       WHERE p.game_id = $1
-       ORDER BY p.created_at ASC`,
-      [gameId]
+       FROM ${schemaName}.players p
+       JOIN public.users u ON p.user_id = u.id
+       LEFT JOIN public.locations l ON p.location_id = l.id
+       ORDER BY p.created_at ASC`
     );
-    return result.rows;
+    return result.rows.map(row => ({ ...row, game_id: gameId }));
   }
 
   async findByUser(userId: string): Promise<Player[]> {
-    const result = await this.pool.query(
-      'SELECT * FROM players WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
+    // This method searches across all game schemas to find a user's players
+    // First, get all games
+    const gamesResult = await this.pool.query(
+      'SELECT id FROM public.games ORDER BY created_at DESC'
     );
-    return result.rows;
+    
+    const players: Player[] = [];
+    for (const game of gamesResult.rows) {
+      const schemaName = getGameSchemaName(game.id);
+      try {
+        const result = await this.pool.query(
+          `SELECT * FROM ${schemaName}.players WHERE user_id = $1`,
+          [userId]
+        );
+        players.push(...result.rows.map(row => ({ ...row, game_id: game.id })));
+      } catch (error) {
+        // Schema might not exist yet, continue to next game
+        console.warn(`Schema ${schemaName} not found, skipping...`);
+      }
+    }
+    
+    return players;
   }
 
-  async findByName(name: string): Promise<Player | null> {
+  async findByName(gameId: number, name: string): Promise<Player | null> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'SELECT * FROM players WHERE name = $1 LIMIT 1',
+      `SELECT * FROM ${schemaName}.players WHERE name = $1 LIMIT 1`,
       [name]
     );
-    return result.rows[0] || null;
+    return result.rows[0] ? { ...result.rows[0], game_id: gameId } : null;
   }
 
-  async update(id: string, data: PlayerUpdateData): Promise<Player | null> {
+  async update(gameId: number, id: string, data: PlayerUpdateData): Promise<Player | null> {
     const updates: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -97,41 +117,45 @@ export class PlayerRepository {
     }
 
     if (updates.length === 0) {
-      return this.findById(id);
+      return this.findById(gameId, id);
     }
 
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
 
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      `UPDATE players SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+      `UPDATE ${schemaName}.players SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`,
       values
     );
 
-    return result.rows[0] || null;
+    return result.rows[0] ? { ...result.rows[0], game_id: gameId } : null;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(gameId: number, id: string): Promise<boolean> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'DELETE FROM players WHERE id = $1',
+      `DELETE FROM ${schemaName}.players WHERE id = $1`,
       [id]
     );
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   async deleteByGameAndUser(gameId: number, userId: string): Promise<boolean> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'DELETE FROM players WHERE game_id = $1 AND user_id = $2',
-      [gameId, userId]
+      `DELETE FROM ${schemaName}.players WHERE user_id = $1`,
+      [userId]
     );
     return result.rowCount !== null && result.rowCount > 0;
   }
 
   async countByGame(gameId: number): Promise<number> {
+    const schemaName = getGameSchemaName(gameId);
     const result = await this.pool.query(
-      'SELECT COUNT(*) as count FROM players WHERE game_id = $1',
-      [gameId]
+      `SELECT COUNT(*) as count FROM ${schemaName}.players`
     );
     return parseInt(result.rows[0].count);
   }
 }
+

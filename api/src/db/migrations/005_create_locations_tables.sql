@@ -21,13 +21,9 @@ CREATE TABLE IF NOT EXISTS location_set_locations (
     PRIMARY KEY (location_set_id, location_id)
 );
 
--- Add location_set_id to games table
+-- Add location_set_id to games table if it doesn't exist
 ALTER TABLE games
-ADD COLUMN location_set_id INTEGER REFERENCES location_sets(id);
-
--- Add location_id to players table
-ALTER TABLE players
-ADD COLUMN location_id INTEGER REFERENCES locations(id);
+ADD COLUMN IF NOT EXISTS location_set_id INTEGER REFERENCES location_sets(id);
 
 -- Insert some default locations (major cities)
 INSERT INTO locations (name, latitude, longitude) VALUES
@@ -60,36 +56,70 @@ INSERT INTO locations (name, latitude, longitude) VALUES
 ('Hong Kong', 22.3193, 114.1694),
 ('Singapore', 1.3521, 103.8198),
 ('Moscow', 55.7558, 37.6173),
-('Mumbai', 19.0760, 72.8777);
+('Mumbai', 19.0760, 72.8777),
+('Amityville', 40.7167, -74.0000),
+('Crystal Lake', 55.7522, 37.5989),
+('Derry', 22.3000, 114.2000),
+('Silent Hill', -33.8599, 151.2111),
+('Sleepy Hollow', 51.5078, -0.1281),
+('Springwood', 35.6833, 139.7667)
+ON CONFLICT (name) DO NOTHING;
 
 -- Insert some default location sets
 INSERT INTO location_sets (name) VALUES
 ('US Cities'),
 ('World Cities'),
 ('European Cities'),
-('Asia Pacific');
+('Asia Pacific'),
+('Halloween Locations')
+ON CONFLICT (name) DO NOTHING;
 
 -- Link locations to location sets
 -- US Cities
 INSERT INTO location_set_locations (location_set_id, location_id)
-SELECT 1, id FROM locations WHERE name IN (
+SELECT ls.id, l.id 
+FROM location_sets ls, locations l 
+WHERE ls.name = 'US Cities' 
+AND l.name IN (
     'New York City', 'Los Angeles', 'Chicago', 'Miami', 'Las Vegas',
     'San Francisco', 'Boston', 'Seattle', 'Denver', 'Atlanta',
     'Philadelphia', 'Phoenix', 'Detroit', 'New Orleans', 'Dallas', 'Houston'
-);
+)
+ON CONFLICT DO NOTHING;
 
 -- World Cities
 INSERT INTO location_set_locations (location_set_id, location_id)
-SELECT 2, id FROM locations;
+SELECT ls.id, l.id 
+FROM location_sets ls, locations l 
+WHERE ls.name = 'World Cities'
+ON CONFLICT DO NOTHING;
 
 -- European Cities
 INSERT INTO location_set_locations (location_set_id, location_id)
-SELECT 3, id FROM locations WHERE name IN (
+SELECT ls.id, l.id 
+FROM location_sets ls, locations l 
+WHERE ls.name = 'European Cities' 
+AND l.name IN (
     'London', 'Paris', 'Berlin', 'Rome', 'Madrid', 'Amsterdam', 'Moscow'
-);
+)
+ON CONFLICT DO NOTHING;
 
 -- Asia Pacific
 INSERT INTO location_set_locations (location_set_id, location_id)
-SELECT 4, id FROM locations WHERE name IN (
+SELECT ls.id, l.id 
+FROM location_sets ls, locations l 
+WHERE ls.name = 'Asia Pacific' 
+AND l.name IN (
     'Tokyo', 'Sydney', 'Hong Kong', 'Singapore', 'Mumbai'
-);
+)
+ON CONFLICT DO NOTHING;
+
+-- Halloween Locations
+INSERT INTO location_set_locations (location_set_id, location_id)
+SELECT ls.id, l.id 
+FROM location_sets ls, locations l 
+WHERE ls.name = 'Halloween Locations' 
+AND l.name IN (
+    'Amityville', 'Crystal Lake', 'Derry', 'Silent Hill', 'Sleepy Hollow', 'Springwood'
+)
+ON CONFLICT DO NOTHING;

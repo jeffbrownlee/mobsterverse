@@ -1,0 +1,23 @@
+-- Migration 006: Implement schema-per-game architecture
+-- This migration documents the transition to using game-specific schemas
+-- for storing ALL game data.
+--
+-- ARCHITECTURE CHANGE:
+-- - Each game now gets its own schema named 'game_[id]'
+-- - Game schemas are created automatically when a game is created
+-- - Each game schema contains its own players table with columns:
+--   * id (UUID)
+--   * user_id (UUID) - references public.users
+--   * name (VARCHAR)
+--   * location_id (INTEGER)
+--   * created_at, updated_at (TIMESTAMP)
+--
+-- IMPORTANT:
+-- - Players are stored ONLY in game-specific schemas
+-- - There is NO public.players table (player migrations 005-007 removed)
+-- - Game schemas are the ONLY authoritative source for game data
+-- - The public schema only contains users, games (metadata), and location sets
+-- - Schema creation/deletion is handled by the application code
+--
+-- This is a documentation-only migration. The actual schema creation
+-- happens in the application layer via the createGameSchema function.

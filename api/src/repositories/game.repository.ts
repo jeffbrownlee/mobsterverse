@@ -1,17 +1,36 @@
 import { Pool } from 'pg';
 import { Game, GameCreateData, GameUpdateData } from '../types/game.types';
+import { createGameSchema, dropGameSchema } from '../db/schema-manager';
 
 export class GameRepository {
   constructor(private pool: Pool) {}
 
   async create(data: GameCreateData): Promise<Game> {
-    const result = await this.pool.query(
-      `INSERT INTO games (start_date, length_days, status, location_set_id, updated_at)
-       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-       RETURNING *`,
-      [data.start_date, data.length_days, data.status, data.location_set_id || null]
-    );
-    return result.rows[0];
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Create the game record
+      const result = await client.query(
+        `INSERT INTO games (start_date, length_days, status, location_set_id, updated_at)
+         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+         RETURNING *`,
+        [data.start_date, data.length_days, data.status, data.location_set_id || null]
+      );
+      
+      const game = result.rows[0];
+
+      // Create the game-specific schema
+      await createGameSchema(this.pool, game.id);
+
+      await client.query('COMMIT');
+      return game;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async findById(id: number): Promise<Game | null> {
@@ -99,10 +118,26 @@ export class GameRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await this.pool.query(
-      'DELETE FROM games WHERE id = $1',
-      [id]
-    );
-    return result.rowCount !== null && result.rowCount > 0;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Drop the game-specific schema
+      await dropGameSchema(this.pool, id);
+
+      // Delete the game record
+      const result = await client.query(
+        'DELETE FROM games WHERE id = $1',
+        [id]
+      );
+
+      await client.query('COMMIT');
+      return result.rowCount !== null && result.rowCount > 0;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
