@@ -7,6 +7,8 @@ export interface Player {
   turns_active: number;
   turns_reserve: number;
   turns_transferred: number;
+  money_cash: number;
+  money_bank: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -32,6 +34,8 @@ export interface PlayerResponse {
   turns_active: number;
   turns_reserve: number;
   turns_transferred: number;
+  money_cash: number;
+  money_bank: number;
   created_at: Date;
   updated_at: Date;
 }

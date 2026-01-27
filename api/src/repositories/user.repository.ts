@@ -4,8 +4,8 @@ import { User, UserCreateData, UserResponse } from '../types/user.types';
 export class UserRepository {
   async create(userData: UserCreateData): Promise<User> {
     const query = `
-      INSERT INTO users (email, password_hash, verification_token, verification_token_expires)
-      VALUES (LOWER($1), $2, $3, $4)
+      INSERT INTO users (email, password_hash, verification_token, verification_token_expires, timezone)
+      VALUES (LOWER($1), $2, $3, $4, $5)
       RETURNING *
     `;
     
@@ -14,6 +14,7 @@ export class UserRepository {
       userData.password_hash,
       userData.verification_token || null,
       userData.verification_token_expires || null,
+      userData.timezone || null,
     ];
     
     const result = await pool.query(query, values);
@@ -132,6 +133,19 @@ export class UserRepository {
     return result.rowCount !== null && result.rowCount > 0;
   }
 
+  async updateTimezone(userId: string, timezone: string): Promise<boolean> {
+    const query = `
+      UPDATE users 
+      SET timezone = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id
+    `;
+    
+    const result = await pool.query(query, [timezone, userId]);
+    return result.rowCount !== null && result.rowCount > 0;
+  }
+
   async deleteAccount(userId: string): Promise<boolean> {
     const query = `
       UPDATE users 
@@ -188,6 +202,7 @@ export class UserRepository {
       status: user.status,
       level: user.level,
       turns: user.turns,
+      timezone: user.timezone,
       created_at: user.created_at,
     };
   }

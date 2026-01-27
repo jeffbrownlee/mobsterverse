@@ -37,3 +37,45 @@ export function addDaysToDate(dateString: string, days: number): string {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
+
+// Calculate and format the time remaining between now and an end date
+// Returns a string with the two most significant time units
+// Examples: "8 days, 23 hours" or "23 hours, 30 minutes" or "1 minute, 57 seconds"
+export function getTimeRemaining(endDateString: string): string {
+  const cleanString = endDateString.replace('Z', '').replace(/\.\d{3}$/, '');
+  const endDate = new Date(cleanString);
+  const now = new Date();
+  
+  const diffMs = endDate.getTime() - now.getTime();
+  
+  // If time has passed, return "0 seconds"
+  if (diffMs <= 0) {
+    return "0 seconds";
+  }
+  
+  // Calculate time units
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  
+  // Calculate remainders
+  const remainingSeconds = seconds % 60;
+  const remainingMinutes = minutes % 60;
+  const remainingHours = hours % 24;
+  
+  // Helper function to format a time unit with proper singular/plural
+  const formatUnit = (value: number, unit: string): string => {
+    return `${value} ${unit}${value !== 1 ? 's' : ''}`;
+  };
+  
+  // Build array of non-zero units
+  const units: string[] = [];
+  if (days > 0) units.push(formatUnit(days, 'day'));
+  if (remainingHours > 0) units.push(formatUnit(remainingHours, 'hour'));
+  if (remainingMinutes > 0) units.push(formatUnit(remainingMinutes, 'minute'));
+  if (remainingSeconds > 0) units.push(formatUnit(remainingSeconds, 'second'));
+  
+  // Return the two most significant units
+  return units.slice(0, 2).join(', ');
+}

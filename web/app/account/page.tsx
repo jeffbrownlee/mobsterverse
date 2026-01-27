@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, User } from '@/lib/api';
+import { TIMEZONES, getDefaultTimezone } from '@/lib/timezones';
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -16,6 +17,10 @@ export default function AccountPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const router = useRouter();
+  const [editingTimezone, setEditingTimezone] = useState(false);
+  const [timezone, setTimezone] = useState('');
+  const [timezoneError, setTimezoneError] = useState('');
+  const [timezoneSuccess, setTimezoneSuccess] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -23,6 +28,7 @@ export default function AccountPage() {
         const response = await authAPI.getMe();
         setUser(response.user);
         setNickname(response.user.nickname || '');
+        setTimezone(response.user.timezone || getDefaultTimezone());
       } catch (error) {
         router.push('/login');
       } finally {
@@ -67,6 +73,25 @@ export default function AccountPage() {
     }
   };
 
+  const handleTimezoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTimezoneError('');
+    setTimezoneSuccess(false);
+    if (!timezone) {
+      setTimezoneError('Timezone is required');
+      return;
+    }
+    try {
+      await authAPI.updateTimezone(timezone);
+      setUser(prev => prev ? { ...prev, timezone } : null);
+      setEditingTimezone(false);
+      setTimezoneSuccess(true);
+      setTimeout(() => setTimezoneSuccess(false), 3000);
+    } catch (error: any) {
+      setTimezoneError(error.response?.data?.error || 'Failed to update timezone');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -101,6 +126,11 @@ export default function AccountPage() {
             {nicknameSuccess && (
               <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-sm text-green-800">Nickname updated successfully!</p>
+              </div>
+            )}
+            {timezoneSuccess && (
+              <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-800">Timezone updated successfully!</p>
               </div>
             )}
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -163,6 +193,60 @@ export default function AccountPage() {
                   )}
                   {nicknameError && (
                     <p className="text-xs text-red-600 mt-1">{nicknameError}</p>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Timezone</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {editingTimezone ? (
+                    <form onSubmit={handleTimezoneSubmit} className="flex items-center gap-2">
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      >
+                        {TIMEZONES.map((tz) => (
+                          <option key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="px-2 py-1 bg-indigo-600 text-white rounded text-xs hover:bg-indigo-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingTimezone(false);
+                          setTimezone(user.timezone || getDefaultTimezone());
+                          setTimezoneError('');
+                        }}
+                        className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span>
+                        {user.timezone
+                          ? TIMEZONES.find(tz => tz.value === user.timezone)?.label || user.timezone
+                          : 'Not set'}
+                      </span>
+                      <button
+                        onClick={() => setEditingTimezone(true)}
+                        className="text-xs text-indigo-600 hover:text-indigo-800"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                  {timezoneError && (
+                    <p className="text-xs text-red-600 mt-1">{timezoneError}</p>
                   )}
                 </dd>
               </div>

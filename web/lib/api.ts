@@ -21,6 +21,7 @@ api.interceptors.request.use((config) => {
 export interface SignupData {
   email: string;
   password: string;
+  timezone?: string;
 }
 
 export interface LoginData {
@@ -42,6 +43,7 @@ export interface User {
   status: UserStatus;
   level: UserLevel;
   turns: number;
+  timezone: string | null;
   created_at: string;
 }
 
@@ -78,6 +80,8 @@ export interface Player {
   turns_active: number;
   turns_reserve: number;
   turns_transferred: number;
+  money_cash: number;
+  money_bank: number;
   created_at: string;
   updated_at: string;
 }
@@ -160,6 +164,11 @@ export const authAPI = {
 
   updateNickname: async (nickname: string) => {
     const response = await api.post('/api/auth/update-nickname', { nickname });
+    return response.data;
+  },
+
+  updateTimezone: async (timezone: string) => {
+    const response = await api.post('/api/auth/update-timezone', { timezone });
     return response.data;
   },
 

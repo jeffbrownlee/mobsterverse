@@ -18,7 +18,7 @@ export class AuthController {
   // Sign up
   signup = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, password } = req.body;
+      const { email, password, timezone } = req.body;
 
       // Validate input
       if (!email || !password) {
@@ -58,6 +58,7 @@ export class AuthController {
         password_hash: passwordHash,
         verification_token: verificationToken,
         verification_token_expires: verificationExpires,
+        timezone: timezone || null,
       });
 
       // Send verification email
@@ -309,6 +310,31 @@ export class AuthController {
       res.json({ message: 'Nickname updated successfully' });
     } catch (error) {
       console.error('Update nickname error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
+  // Update timezone (protected route)
+  updateTimezone = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { timezone } = req.body;
+
+      if (!timezone) {
+        res.status(400).json({ error: 'Timezone is required' });
+        return;
+      }
+
+      // Update timezone
+      await userRepo.updateTimezone(req.userId, timezone);
+
+      res.json({ message: 'Timezone updated successfully' });
+    } catch (error) {
+      console.error('Update timezone error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

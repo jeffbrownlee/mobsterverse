@@ -53,6 +53,8 @@ export class PlayerRepository {
         p.turns_active,
         p.turns_reserve,
         p.turns_transferred,
+        p.money_cash,
+        p.money_bank,
         p.created_at,
         p.updated_at,
         u.email,

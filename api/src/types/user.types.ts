@@ -16,6 +16,7 @@ export interface User {
   status: UserStatus;
   level: UserLevel;
   turns: number;
+  timezone: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -25,6 +26,7 @@ export interface UserCreateData {
   password_hash: string;
   verification_token?: string;
   verification_token_expires?: Date;
+  timezone?: string;
 }
 
 export interface UserResponse {
@@ -36,6 +38,7 @@ export interface UserResponse {
   status: UserStatus;
   level: UserLevel;
   turns: number;
+  timezone: string | null;
   created_at: Date;
 }
 

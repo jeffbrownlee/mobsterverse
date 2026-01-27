@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame } from '@/contexts/GameContext';
-import { formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
+import { formatDateTimeNoTZ, addDaysToDate, getTimeRemaining } from '@/lib/dateUtils';
 import { authAPI, User } from '@/lib/api';
 
 export default function GamePage() {
   const { currentGame, currentPlayer, setCurrentGame } = useGame();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,24 @@ export default function GamePage() {
 
     fetchUser();
   }, [currentGame, currentPlayer, router]);
+
+  // Update time remaining every second
+  useEffect(() => {
+    if (!currentGame) return;
+
+    const updateTimeRemaining = () => {
+      const endDate = addDaysToDate(currentGame.start_date, currentGame.length_days);
+      setTimeRemaining(getTimeRemaining(endDate));
+    };
+
+    // Initial update
+    updateTimeRemaining();
+
+    // Update every second
+    const interval = setInterval(updateTimeRemaining, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentGame]);
 
   const handleLeaveGame = () => {
     setCurrentGame(null, null);
@@ -55,15 +74,6 @@ export default function GamePage() {
 
           <div className="border-t border-gray-200 pt-6">
             <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Turn Information</h2>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <p><strong>User Turns:</strong> {currentUser?.turns ?? 'Loading...'}</p>
-                  <p><strong>Active Turns:</strong> {currentPlayer.turns_active}</p>
-                  <p><strong>Reserve Turns:</strong> {currentPlayer.turns_reserve}</p>
-                  <p><strong>Total Transferred:</strong> {currentPlayer.turns_transferred}</p>
-                </div>
-              </div>
 
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">Game Information</h2>
@@ -78,8 +88,29 @@ export default function GamePage() {
                   <p><strong>Duration:</strong> {currentGame.length_days} days</p>
                   <p><strong>Started:</strong> {formatDateTimeNoTZ(currentGame.start_date)}</p>
                   <p><strong>Ends:</strong> {formatDateTimeNoTZ(addDaysToDate(currentGame.start_date, currentGame.length_days))}</p>
+                  <p><strong>Time Remaining:</strong> {timeRemaining}</p>
                 </div>
               </div>
+
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Turn Information</h2>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <p><strong>User Turns:</strong> {currentUser?.turns ?? 'Loading...'}</p>
+                  <p><strong>Active Turns:</strong> {currentPlayer.turns_active}</p>
+                  <p><strong>Reserve Turns:</strong> {currentPlayer.turns_reserve}</p>
+                  <p><strong>Total Transferred:</strong> {currentPlayer.turns_transferred}</p>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">Money Information</h2>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <p><strong>Cash on Hand:</strong> ${currentPlayer.money_cash?.toLocaleString() ?? 0}</p>
+                  <p><strong>Money in Bank:</strong> ${currentPlayer.money_bank?.toLocaleString() ?? 0}</p>
+                  <p><strong>Total Money:</strong> ${((currentPlayer.money_cash ?? 0) + (currentPlayer.money_bank ?? 0)).toLocaleString()}</p>
+                </div>
+              </div>
+
 
               <div className="pt-4">
                 <button
