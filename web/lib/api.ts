@@ -324,4 +324,6 @@ export const locationAPI = {
   },
 };
 
+// Export api as both named and default export
+export { api };
 export default api;
