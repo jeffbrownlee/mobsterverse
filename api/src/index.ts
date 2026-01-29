@@ -8,6 +8,8 @@ import mfaRoutes from './routes/mfa.routes';
 import userRoutes from './routes/user.routes';
 import locationRoutes from './routes/location.routes';
 import resourceRoutes from './routes/resource.routes';
+import bankRoutes from './routes/bank.routes';
+import turnsRoutes from './routes/turns.routes';
 import pool from './db/connection';
 import { initializeDatabase } from './db/init';
 
@@ -35,6 +37,8 @@ app.use('/api/mfa', mfaRoutes);
 app.use('/api', userRoutes);
 app.use('/api', locationRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api', bankRoutes);
+app.use('/api', turnsRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

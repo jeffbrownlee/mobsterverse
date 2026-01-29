@@ -324,6 +324,34 @@ export const locationAPI = {
   },
 };
 
+export const bankAPI = {
+  // Withdraw all money from bank to cash
+  withdraw: async (gameId: number, playerId: string): Promise<Player> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/bank/withdraw`);
+    return response.data;
+  },
+
+  // Deposit money from cash to bank
+  deposit: async (gameId: number, playerId: string, amount: number): Promise<Player> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/bank/deposit`, { amount });
+    return response.data;
+  },
+};
+
+export const turnsAPI = {
+  // Transfer reserve turns to active turns
+  transferReserveToActive: async (gameId: number, playerId: string, amount: number): Promise<Player> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/turns/reserve-to-active`, { amount });
+    return response.data;
+  },
+
+  // Transfer account turns to reserve turns
+  transferAccountToReserve: async (gameId: number, playerId: string, amount: number): Promise<{ player: Player; user: User }> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/turns/account-to-reserve`, { amount });
+    return response.data;
+  },
+};
+
 // Export api as both named and default export
 export { api };
 export default api;

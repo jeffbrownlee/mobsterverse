@@ -107,6 +107,18 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                 >
                   Home
                 </Link>
+                <Link
+                  href="/game/bank"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Bank
+                </Link>
+                <Link
+                  href="/game/turns"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Turns
+                </Link>
                 {/* Additional menu items will be added here */}
               </nav>
             </div>
