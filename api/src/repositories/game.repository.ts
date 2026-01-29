@@ -12,10 +12,10 @@ export class GameRepository {
 
       // Create the game record
       const result = await client.query(
-        `INSERT INTO games (start_date, length_days, status, location_set_id, starting_reserve, starting_bank, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+        `INSERT INTO games (start_date, length_days, status, location_set_id, resource_set_id, starting_reserve, starting_bank, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
          RETURNING *`,
-        [data.start_date, data.length_days, data.status, data.location_set_id || null, data.starting_reserve, data.starting_bank]
+        [data.start_date, data.length_days, data.status, data.location_set_id || null, data.resource_set_id || null, data.starting_reserve, data.starting_bank]
       );
       
       const game = result.rows[0];
@@ -100,6 +100,11 @@ export class GameRepository {
     if (data.location_set_id !== undefined) {
       updates.push(`location_set_id = $${paramCount++}`);
       values.push(data.location_set_id);
+    }
+
+    if (data.resource_set_id !== undefined) {
+      updates.push(`resource_set_id = $${paramCount++}`);
+      values.push(data.resource_set_id);
     }
 
     if (data.starting_reserve !== undefined) {

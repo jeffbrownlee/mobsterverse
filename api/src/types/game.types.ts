@@ -6,6 +6,7 @@ export interface Game {
   length_days: number;
   status: GameStatus;
   location_set_id: number | null;
+  resource_set_id: number | null;
   starting_reserve: number;
   starting_bank: number;
   created_at: Date;
@@ -17,6 +18,7 @@ export interface GameCreateData {
   length_days: number;
   status: GameStatus;
   location_set_id?: number;
+  resource_set_id?: number;
   starting_reserve: number;
   starting_bank: number;
 }
@@ -26,6 +28,7 @@ export interface GameUpdateData {
   length_days?: number;
   status?: GameStatus;
   location_set_id?: number | null;
+  resource_set_id?: number | null;
   starting_reserve?: number;
   starting_bank?: number;
 }
@@ -36,6 +39,7 @@ export interface GameResponse {
   length_days: number;
   status: GameStatus;
   location_set_id: number | null;
+  resource_set_id: number | null;
   created_at: Date;
   updated_at: Date;
 }

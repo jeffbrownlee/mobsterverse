@@ -30,7 +30,7 @@ export class GameController {
   // Create a new game (admin only)
   createGame = async (req: Request, res: Response) => {
     try {
-      const { start_date, length_days, status, location_set_id, starting_reserve, starting_bank } = req.body;
+      const { start_date, length_days, status, location_set_id, resource_set_id, starting_reserve, starting_bank } = req.body;
 
       if (!start_date || !length_days || !status) {
         return res.status(400).json({ error: 'Missing required fields' });
@@ -46,6 +46,10 @@ export class GameController {
 
       if (location_set_id !== undefined && location_set_id !== null && location_set_id !== '') {
         gameData.location_set_id = parseInt(location_set_id);
+      }
+
+      if (resource_set_id !== undefined && resource_set_id !== null && resource_set_id !== '') {
+        gameData.resource_set_id = parseInt(resource_set_id);
       }
 
       const game = await gameRepository.create(gameData);
@@ -115,7 +119,7 @@ export class GameController {
   updateGame = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id as string);
-      const { start_date, length_days, status, location_set_id, starting_reserve, starting_bank } = req.body;
+      const { start_date, length_days, status, location_set_id, resource_set_id, starting_reserve, starting_bank } = req.body;
 
       // Check if game has players
       const playerCount = await playerRepository.countByGame(id);
@@ -135,6 +139,9 @@ export class GameController {
       // Only allow updating these fields if no players have joined
       if (location_set_id !== undefined && !hasPlayers) {
         updateData.location_set_id = location_set_id === '' || location_set_id === null ? null : parseInt(location_set_id);
+      }
+      if (resource_set_id !== undefined && !hasPlayers) {
+        updateData.resource_set_id = resource_set_id === '' || resource_set_id === null ? null : parseInt(resource_set_id);
       }
       if (starting_reserve !== undefined && !hasPlayers) {
         updateData.starting_reserve = parseInt(starting_reserve);

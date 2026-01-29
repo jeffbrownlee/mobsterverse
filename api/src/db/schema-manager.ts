@@ -45,6 +45,30 @@ export async function createGameSchema(pool: Pool, gameId: number): Promise<void
       ON ${schemaName}.players(location_id)
     `);
 
+    // Create the player_resources table in the game schema
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ${schemaName}.player_resources (
+        id SERIAL PRIMARY KEY,
+        player_id UUID NOT NULL REFERENCES ${schemaName}.players(id) ON DELETE CASCADE,
+        resource_id INTEGER NOT NULL REFERENCES public.resources(id) ON DELETE CASCADE,
+        quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(player_id, resource_id)
+      )
+    `);
+
+    // Create indexes for player_resources
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_player_resources_player_id 
+      ON ${schemaName}.player_resources(player_id)
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_player_resources_resource_id 
+      ON ${schemaName}.player_resources(resource_id)
+    `);
+
     await client.query('COMMIT');
     console.log(`✅ Created schema '${schemaName}' with players table`);
   } catch (error) {

@@ -53,6 +53,7 @@ export interface Game {
   length_days: number;
   status: GameStatus;
   location_set_id: number | null;
+  resource_set_id: number | null;
   starting_reserve: number;
   starting_bank: number;
   created_at: string;
@@ -65,6 +66,7 @@ export interface GameCreateData {
   length_days: number;
   status: GameStatus;
   location_set_id?: number;
+  resource_set_id?: number;
   starting_reserve: number;
   starting_bank: number;
 }
@@ -74,6 +76,7 @@ export interface GameUpdateData {
   length_days?: number;
   status?: GameStatus;
   location_set_id?: number;
+  resource_set_id?: number;
   starting_reserve?: number;
   starting_bank?: number;
 }
@@ -324,6 +327,22 @@ export const locationAPI = {
   },
 };
 
+export interface ResourceSet {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const resourceAPI = {
+  // Get all resource sets
+  getAllResourceSets: async (): Promise<{ resourceSets: ResourceSet[] }> => {
+    const response = await api.get('/api/resources/sets');
+    return { resourceSets: response.data };
+  },
+};
+
 export const bankAPI = {
   // Withdraw all money from bank to cash
   withdraw: async (gameId: number, playerId: string): Promise<Player> => {
@@ -348,6 +367,44 @@ export const turnsAPI = {
   // Transfer account turns to reserve turns
   transferAccountToReserve: async (gameId: number, playerId: string, amount: number): Promise<{ player: Player; user: User }> => {
     const response = await api.post(`/api/games/${gameId}/players/${playerId}/turns/account-to-reserve`, { amount });
+    return response.data;
+  },
+};
+
+export interface MarketResource {
+  id: number;
+  resource_type_id: number;
+  name: string;
+  description: string | null;
+  resource_type_name: string;
+  buy_price: number;
+  sell_price: number;
+  player_quantity: number;
+}
+
+export const marketAPI = {
+  // Get all marketplace resources (optionally filtered by type)
+  getMarketResources: async (gameId: number, playerId: string, resourceType?: string): Promise<MarketResource[]> => {
+    const params = resourceType ? `?type=${resourceType}` : '';
+    const response = await api.get(`/api/games/${gameId}/players/${playerId}/market${params}`);
+    return response.data;
+  },
+
+  // Buy a resource
+  buyResource: async (gameId: number, playerId: string, resourceId: number, quantity: number): Promise<{ player_quantity: number; money_cash: number }> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/market/buy`, { 
+      resource_id: resourceId, 
+      quantity 
+    });
+    return response.data;
+  },
+
+  // Sell a resource
+  sellResource: async (gameId: number, playerId: string, resourceId: number, quantity: number): Promise<{ player_quantity: number; money_cash: number }> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/market/sell`, { 
+      resource_id: resourceId, 
+      quantity 
+    });
     return response.data;
   },
 };

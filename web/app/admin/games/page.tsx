@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, User, gameAPI, Game, GameStatus, locationAPI, LocationSetWithLocations } from '@/lib/api';
+import { authAPI, User, gameAPI, Game, GameStatus, locationAPI, LocationSetWithLocations, resourceAPI, ResourceSet } from '@/lib/api';
 import { toDateTimeLocal, formatDateTimeNoTZ, addDaysToDate } from '@/lib/dateUtils';
 
 export default function AdminGamesPage() {
@@ -11,6 +11,7 @@ export default function AdminGamesPage() {
   const [loading, setLoading] = useState(true);
   const [games, setGames] = useState<Game[]>([]);
   const [locationSets, setLocationSets] = useState<LocationSetWithLocations[]>([]);
+  const [resourceSets, setResourceSets] = useState<ResourceSet[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [formData, setFormData] = useState({
@@ -18,6 +19,7 @@ export default function AdminGamesPage() {
     length_days: 7,
     status: 'active' as GameStatus,
     location_set_id: undefined as number | undefined,
+    resource_set_id: undefined as number | undefined,
     starting_reserve: 25000,
     starting_bank: 5000000,
   });
@@ -35,7 +37,7 @@ export default function AdminGamesPage() {
         }
         
         setUser(response.user);
-        await Promise.all([loadGames(), loadLocationSets()]);
+        await Promise.all([loadGames(), loadLocationSets(), loadResourceSets()]);
       } catch (error) {
         router.push('/login');
       } finally {
@@ -64,6 +66,15 @@ export default function AdminGamesPage() {
     }
   };
 
+  const loadResourceSets = async () => {
+    try {
+      const response = await resourceAPI.getAllResourceSets();
+      setResourceSets(response.resourceSets);
+    } catch (error) {
+      console.error('Failed to load resource sets:', error);
+    }
+  };
+
   const handleLogout = () => {
     authAPI.logout();
     router.push('/login');
@@ -81,7 +92,7 @@ export default function AdminGamesPage() {
         start_date: utcStartDate
       });
       setShowCreateForm(false);
-      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, resource_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
       await loadGames();
     } catch (error) {
       console.error('Failed to create game:', error);
@@ -103,7 +114,7 @@ export default function AdminGamesPage() {
         start_date: utcStartDate
       });
       setEditingGame(null);
-      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
+      setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, resource_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
       await loadGames();
     } catch (error) {
       console.error('Failed to update game:', error);
@@ -130,6 +141,7 @@ export default function AdminGamesPage() {
       length_days: game.length_days,
       status: game.status,
       location_set_id: game.location_set_id || undefined,
+      resource_set_id: game.resource_set_id || undefined,
       starting_reserve: game.starting_reserve,
       starting_bank: game.starting_bank,
     });
@@ -139,7 +151,7 @@ export default function AdminGamesPage() {
   const cancelEdit = () => {
     setEditingGame(null);
     setShowCreateForm(false);
-    setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
+    setFormData({ start_date: '', length_days: 7, status: 'active', location_set_id: undefined, resource_set_id: undefined, starting_reserve: 25000, starting_bank: 5000000 });
   };
 
   if (loading || !user) {
@@ -267,6 +279,29 @@ export default function AdminGamesPage() {
                         {locationSets.map((set) => (
                           <option key={set.id} value={set.id}>
                             {set.name} ({set.locations.length} locations)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Resource Set
+                        {editingGame && editingGame.player_count && editingGame.player_count > 0 && (
+                          <span className="ml-2 text-xs text-gray-500">(locked - {editingGame.player_count} player{editingGame.player_count !== 1 ? 's' : ''} joined)</span>
+                        )}
+                      </label>
+                      <select
+                        value={formData.resource_set_id || ''}
+                        onChange={(e) => setFormData({ ...formData, resource_set_id: e.target.value ? parseInt(e.target.value) : undefined })}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          !!(editingGame && editingGame.player_count && editingGame.player_count > 0) ? 'text-gray-400' : 'text-gray-700'
+                        }`}
+                        disabled={!!(editingGame && editingGame.player_count && editingGame.player_count > 0)}
+                      >
+                        <option value="">No Resource Set</option>
+                        {resourceSets.map((set) => (
+                          <option key={set.id} value={set.id}>
+                            {set.name}
                           </option>
                         ))}
                       </select>
