@@ -121,19 +121,6 @@ export class GameController {
       const playerCount = await playerRepository.countByGame(id);
       const hasPlayers = playerCount > 0;
 
-      // Prevent updating certain fields if players have joined
-      if (hasPlayers) {
-        if (location_set_id !== undefined) {
-          return res.status(400).json({ error: 'Cannot change location set after players have joined the game' });
-        }
-        if (starting_reserve !== undefined) {
-          return res.status(400).json({ error: 'Cannot change starting reserve after players have joined the game' });
-        }
-        if (starting_bank !== undefined) {
-          return res.status(400).json({ error: 'Cannot change starting bank after players have joined the game' });
-        }
-      }
-
       const updateData: GameUpdateData = {};
 
       if (start_date !== undefined) {
@@ -145,6 +132,7 @@ export class GameController {
       if (status !== undefined) {
         updateData.status = status;
       }
+      // Only allow updating these fields if no players have joined
       if (location_set_id !== undefined && !hasPlayers) {
         updateData.location_set_id = location_set_id === '' || location_set_id === null ? null : parseInt(location_set_id);
       }

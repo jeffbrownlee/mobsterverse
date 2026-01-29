@@ -106,20 +106,11 @@ export default function AdminPage() {
                 <div className="text-blue-600 font-medium">Manage Locations →</div>
               </Link>
 
-              {/* Resource Types Management */}
-              <Link href="/admin/resource-types" className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Resource Types</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Define resource types and their attributes
-                </p>
-                <div className="text-blue-600 font-medium">Manage Types →</div>
-              </Link>
-
               {/* Resources Management */}
               <Link href="/admin/resources" className="bg-gray-50 rounded-lg p-6 hover:bg-gray-100 transition-colors">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Resources & Sets</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Resources</h3>
                 <p className="text-gray-600 text-sm mb-4">
-                  Create resources and organize them into sets
+                  Manage resource types, resources, and sets
                 </p>
                 <div className="text-blue-600 font-medium">Manage Resources →</div>
               </Link>

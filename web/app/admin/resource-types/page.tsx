@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { api, authAPI } from '@/lib/api';
 
 interface ResourceType {
   id: number;
@@ -25,6 +27,7 @@ interface ResourceTypeWithAttributes extends ResourceType {
 }
 
 export default function ResourceTypesPage() {
+  const router = useRouter();
   const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
   const [selectedType, setSelectedType] = useState<ResourceTypeWithAttributes | null>(null);
   const [showTypeForm, setShowTypeForm] = useState(false);
@@ -43,6 +46,11 @@ export default function ResourceTypesPage() {
   const [attrIsRequired, setAttrIsRequired] = useState(true);
   const [attrDefaultValue, setAttrDefaultValue] = useState('');
   const [editingAttrId, setEditingAttrId] = useState<number | null>(null);
+
+  const handleLogout = () => {
+    authAPI.logout();
+    router.push('/login');
+  };
 
   useEffect(() => {
     loadResourceTypes();
@@ -182,13 +190,43 @@ export default function ResourceTypesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Resource Types</h1>
-          <p className="mt-2 text-sm text-gray-700">
-            Define types of resources and their attributes
-          </p>
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Resource Types</h1>
+              <p className="text-gray-600 mt-2">
+                Define types of resources and their attributes
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Link
+                href="/admin"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Admin Home
+              </Link>
+              <Link
+                href="/dashboard"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/account"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Account
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
 
         {error && (
