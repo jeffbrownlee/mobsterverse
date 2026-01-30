@@ -192,6 +192,16 @@ export class UserRepository {
     return result.rows[0] || null;
   }
 
+  async updateLastSeen(userId: string): Promise<void> {
+    const query = `
+      UPDATE users 
+      SET last_seen = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    
+    await pool.query(query, [userId]);
+  }
+
   toUserResponse(user: User): UserResponse {
     return {
       id: user.id,
@@ -203,6 +213,7 @@ export class UserRepository {
       level: user.level,
       turns: user.turns,
       timezone: user.timezone,
+      last_seen: user.last_seen,
       created_at: user.created_at,
     };
   }

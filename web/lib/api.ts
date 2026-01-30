@@ -44,6 +44,7 @@ export interface User {
   level: UserLevel;
   turns: number;
   timezone: string | null;
+  last_seen: string | null;
   created_at: string;
 }
 
@@ -105,6 +106,7 @@ export interface PlayerWithUserInfo extends Player {
   location_name?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  last_seen?: string | null;
 }
 
 export interface Location {
@@ -272,6 +274,12 @@ export const gameAPI = {
   // Get my player info for a specific game
   getMyPlayer: async (id: number): Promise<{ player: Player }> => {
     const response = await api.get(`/api/game/${id}/my-player`);
+    return response.data;
+  },
+
+  // Get online players for a game (active in last 60 minutes)
+  getOnlinePlayers: async (id: number): Promise<{ players: PlayerWithUserInfo[]; count: number }> => {
+    const response = await api.get(`/api/game/${id}/players/online`);
     return response.data;
   },
 

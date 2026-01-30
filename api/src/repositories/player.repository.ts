@@ -96,6 +96,40 @@ export class PlayerRepository {
     return result.rows.map(row => ({ ...row, game_id: gameId }));
   }
 
+  async findOnlinePlayersByGame(gameId: number): Promise<PlayerWithUserInfo[]> {
+    const schemaName = getGameSchemaName(gameId);
+    const result = await this.pool.query(
+      `SELECT 
+        p.id,
+        p.user_id,
+        p.name,
+        p.location_id,
+        p.turns_active,
+        p.turns_reserve,
+        p.turns_transferred,
+        p.money_cash,
+        p.money_bank,
+        p.created_at,
+        p.updated_at,
+        u.email,
+        u.nickname,
+        u.status,
+        u.level,
+        u.turns,
+        u.last_seen,
+        l.name as location_name,
+        l.latitude,
+        l.longitude
+       FROM ${schemaName}.players p
+       JOIN public.users u ON p.user_id = u.id
+       LEFT JOIN public.locations l ON p.location_id = l.id
+       WHERE u.last_seen IS NOT NULL 
+         AND u.last_seen >= NOW() - INTERVAL '60 minutes'
+       ORDER BY u.last_seen DESC`
+    );
+    return result.rows.map(row => ({ ...row, game_id: gameId }));
+  }
+
   async findByUser(userId: string): Promise<Player[]> {
     // This method searches across all game schemas to find a user's players
     // First, get all games

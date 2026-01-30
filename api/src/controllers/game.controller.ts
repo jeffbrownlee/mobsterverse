@@ -317,4 +317,23 @@ export class GameController {
       res.status(500).json({ error: 'Failed to fetch games' });
     }
   };
+
+  // Get online players for a game (users active in last 60 minutes)
+  getOnlinePlayers = async (req: Request, res: Response) => {
+    try {
+      const gameId = parseInt(req.params.id as string);
+
+      // Check if game exists
+      const game = await gameRepository.findById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      const players = await playerRepository.findOnlinePlayersByGame(gameId);
+      res.json({ players, count: players.length });
+    } catch (error) {
+      console.error('Get online players error:', error);
+      res.status(500).json({ error: 'Failed to fetch online players' });
+    }
+  };
 }

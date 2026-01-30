@@ -17,6 +17,7 @@ router.get('/active-upcoming', authenticate, gameController.getActiveAndUpcoming
 router.get('/my-games', authenticate, gameController.getMyGames);
 router.post('/:id/join', authenticate, gameController.joinGame);
 router.get('/:id/players', authenticate, gameController.getGamePlayers);
+router.get('/:id/players/online', authenticate, gameController.getOnlinePlayers);
 router.get('/:id/my-player', authenticate, gameController.getMyPlayer);
 
 // Admin routes - manage games

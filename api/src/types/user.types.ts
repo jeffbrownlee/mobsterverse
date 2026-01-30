@@ -17,6 +17,7 @@ export interface User {
   level: UserLevel;
   turns: number;
   timezone: string | null;
+  last_seen: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -39,6 +40,7 @@ export interface UserResponse {
   level: UserLevel;
   turns: number;
   timezone: string | null;
+  last_seen: Date | null;
   created_at: Date;
 }
 

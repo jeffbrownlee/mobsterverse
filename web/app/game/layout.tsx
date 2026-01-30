@@ -131,6 +131,12 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                 >
                   Personnel
                 </Link>
+                <Link
+                  href="/game/online"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Online
+                </Link>
                 {/* Additional menu items will be added here */}
               </nav>
             </div>

@@ -11,11 +11,11 @@ export interface AuthRequest extends Request {
   user?: User;
 }
 
-export const authenticate = (
+export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     
@@ -33,6 +33,15 @@ export const authenticate = (
     }
 
     req.userId = decoded.userId;
+    
+    // Update last_seen timestamp
+    try {
+      await userRepository.updateLastSeen(decoded.userId);
+    } catch (error) {
+      // Log but don't fail the request if last_seen update fails
+      console.error('Failed to update last_seen:', error);
+    }
+    
     next();
   } catch (error) {
     res.status(401).json({ error: 'Authentication failed' });
