@@ -409,6 +409,67 @@ export const marketAPI = {
   },
 };
 
+export interface PersonnelResource {
+  id: number;
+  resource_type_id: number;
+  resource_type_name: string;
+  name: string;
+  description: string | null;
+  value: number;
+  recruitmin: number;
+  recruitmax: number;
+  player_quantity: number;
+}
+
+export interface RecruitmentResult {
+  turnsUsed: number;
+  recruited: {
+    resourceId: number;
+    resourceName: string;
+    quantity: number;
+  }[];
+  player: {
+    turns_active: number;
+    turns_reserve: number;
+  };
+}
+
+export interface DivestResult {
+  resourceId: number;
+  resourceName: string;
+  quantityDivested: number;
+  cashReceived: number;
+  player: {
+    money_cash: number;
+  };
+}
+
+export const personnelAPI = {
+  // Get available personnel resources (Associates and Enforcers)
+  getPersonnelResources: async (gameId: number, playerId: string): Promise<PersonnelResource[]> => {
+    const response = await api.get(`/api/games/${gameId}/players/${playerId}/personnel`);
+    return response.data;
+  },
+
+  // Recruit personnel
+  recruitPersonnel: async (gameId: number, playerId: string, resourceIds: number[], turns: number): Promise<RecruitmentResult> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/personnel/recruit`, {
+      resourceIds,
+      turns
+    });
+    return response.data;
+  },
+
+  // Divest personnel
+  divestPersonnel: async (gameId: number, playerId: string, resourceId: number, quantity: number): Promise<DivestResult> => {
+    const response = await api.post(`/api/games/${gameId}/players/${playerId}/personnel/divest`, {
+      resourceId,
+      quantity
+    });
+    return response.data;
+  },
+};
+
 // Export api as both named and default export
 export { api };
 export default api;

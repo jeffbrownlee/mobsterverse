@@ -11,6 +11,7 @@ import resourceRoutes from './routes/resource.routes';
 import bankRoutes from './routes/bank.routes';
 import turnsRoutes from './routes/turns.routes';
 import marketRoutes from './routes/market.routes';
+import personnelRoutes from './routes/personnel.routes';
 import pool from './db/connection';
 import { initializeDatabase } from './db/init';
 
@@ -41,6 +42,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api', bankRoutes);
 app.use('/api', turnsRoutes);
 app.use('/api', marketRoutes);
+app.use('/api', personnelRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
