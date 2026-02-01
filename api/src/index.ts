@@ -12,8 +12,10 @@ import bankRoutes from './routes/bank.routes';
 import turnsRoutes from './routes/turns.routes';
 import marketRoutes from './routes/market.routes';
 import personnelRoutes from './routes/personnel.routes';
+import schedulerRoutes from './routes/scheduler.routes';
 import pool from './db/connection';
 import { initializeDatabase } from './db/init';
+import { initializeScheduler, shutdownScheduler } from './scheduler';
 
 dotenv.config();
 
@@ -43,6 +45,7 @@ app.use('/api', bankRoutes);
 app.use('/api', turnsRoutes);
 app.use('/api', marketRoutes);
 app.use('/api', personnelRoutes);
+app.use('/api/scheduler', schedulerRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -57,10 +60,26 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 API server running on port ${PORT}`);
     });
+
+    // Initialize scheduled tasks
+    initializeScheduler();
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server and stopping scheduled tasks');
+  shutdownScheduler();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server and stopping scheduled tasks');
+  shutdownScheduler();
+  process.exit(0);
+});
 
 startServer();
