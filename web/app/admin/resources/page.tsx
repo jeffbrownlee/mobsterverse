@@ -514,7 +514,7 @@ export default function ResourcesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Type Selector */}
             <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Resource Type</h2>
+              <h2 className="text-xl font-semibold text-black mb-4">Resource Type</h2>
               <div className="space-y-2">
                 {resourceTypes.map((type) => (
                   <button
@@ -524,7 +524,7 @@ export default function ResourcesPage() {
                       selectedTypeId === type.id ? 'border-blue-500 bg-blue-50' : ''
                     }`}
                   >
-                    <h3 className="font-semibold">{type.name}</h3>
+                    <h3 className="font-semibold text-black">{type.name}</h3>
                     {type.description && (
                       <p className="text-sm text-gray-600 mt-1">{type.description}</p>
                     )}
@@ -536,7 +536,7 @@ export default function ResourcesPage() {
             {/* Resources List */}
             <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold text-black">
                   {selectedTypeDetails ? `${selectedTypeDetails.name} Resources` : 'Resources'}
                 </h2>
                 <button
@@ -557,7 +557,7 @@ export default function ResourcesPage() {
 
               {showResourceForm && selectedTypeDetails && (
                 <form onSubmit={handleCreateOrUpdateResource} className="mb-6 p-4 border rounded bg-gray-50">
-                  <h3 className="font-semibold mb-3">
+                  <h3 className="font-semibold text-black mb-3">
                     {editingResourceId ? 'Edit Resource' : 'New Resource'}
                   </h3>
                   <div className="space-y-3">
@@ -588,7 +588,7 @@ export default function ResourcesPage() {
                           <label className="block text-sm font-medium mb-1">
                             {attr.name}
                             {attr.is_required && <span className="text-red-500">*</span>}
-                            <span className="text-xs text-gray-500 ml-2">({attr.data_type})</span>
+                            <span className="text-xs text-black ml-2">({attr.data_type})</span>
                           </label>
                           {attr.data_type === 'boolean' ? (
                             <select
@@ -652,7 +652,7 @@ export default function ResourcesPage() {
                     <div key={resource.id} className="p-3 border rounded">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h3 className="font-semibold">{resource.name}</h3>
+                          <h3 className="font-semibold text-black">{resource.name}</h3>
                           {resource.description && (
                             <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
                           )}
@@ -686,7 +686,7 @@ export default function ResourcesPage() {
             {/* Sets List */}
             <div className="bg-white shadow rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Resource Sets</h2>
+                <h2 className="text-xl font-semibold text-black">Resource Sets</h2>
                 <button
                   onClick={() => {
                     setSetName('');
@@ -703,7 +703,7 @@ export default function ResourcesPage() {
 
               {showSetForm && (
                 <form onSubmit={handleCreateOrUpdateSet} className="mb-6 p-4 border rounded bg-gray-50">
-                  <h3 className="font-semibold mb-3">
+                  <h3 className="font-semibold text-black mb-3">
                     {editingSetId ? 'Edit Resource Set' : 'New Resource Set'}
                   </h3>
                   <div className="space-y-3">
@@ -735,7 +735,7 @@ export default function ResourcesPage() {
 
                         return (
                           <div key={type.id} className="mb-3">
-                            <h5 className="text-sm font-semibold text-gray-700 mb-1">{type.name}</h5>
+                            <h5 className="text-sm font-semibold text-black mb-1">{type.name}</h5>
                             {typeResources.map(resource => (
                               <label key={resource.id} className="flex items-center py-1">
                                 <input
@@ -785,7 +785,7 @@ export default function ResourcesPage() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold">{set.name}</h3>
+                        <h3 className="font-semibold text-black">{set.name}</h3>
                         {set.description && (
                           <p className="text-sm text-gray-600 mt-1">{set.description}</p>
                         )}
@@ -820,7 +820,7 @@ export default function ResourcesPage() {
             <div className="bg-white shadow rounded-lg p-6">
               {selectedSet ? (
                 <>
-                  <h2 className="text-xl font-semibold mb-4">
+                  <h2 className="text-xl font-semibold text-black mb-4">
                     {selectedSet.name} - Resources
                   </h2>
                   <div className="space-y-4">
@@ -833,7 +833,7 @@ export default function ResourcesPage() {
                         <div key={resource.id} className="p-4 border rounded">
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <h3 className="font-semibold">{resource.name}</h3>
+                              <h3 className="font-semibold text-black">{resource.name}</h3>
                               <span className="text-xs text-gray-500">{resource.resource_type_name}</span>
                             </div>
                           </div>
@@ -872,7 +872,7 @@ export default function ResourcesPage() {
             {/* Resource Types List */}
             <div className="bg-white shadow rounded-lg p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Resource Types</h2>
+                <h2 className="text-xl font-semibold text-black">Resource Types</h2>
                 <button
                   onClick={() => {
                     setTypeName('');
@@ -888,7 +888,7 @@ export default function ResourcesPage() {
 
               {showTypeForm && (
                 <form onSubmit={handleCreateOrUpdateType} className="mb-6 p-4 border rounded bg-gray-50">
-                  <h3 className="font-semibold mb-3">
+                  <h3 className="font-semibold text-black mb-3">
                     {editingTypeId ? 'Edit Resource Type' : 'New Resource Type'}
                   </h3>
                   <div className="space-y-3">
@@ -944,7 +944,7 @@ export default function ResourcesPage() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold">{type.name}</h3>
+                        <h3 className="font-semibold text-black">{type.name}</h3>
                         {type.description && (
                           <p className="text-sm text-gray-600 mt-1">{type.description}</p>
                         )}
@@ -980,7 +980,7 @@ export default function ResourcesPage() {
               {selectedType ? (
                 <>
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold text-black">
                       Attributes for {selectedType.name}
                     </h2>
                     <button
@@ -1000,7 +1000,7 @@ export default function ResourcesPage() {
 
                   {showAttributeForm && (
                     <form onSubmit={handleCreateOrUpdateAttribute} className="mb-6 p-4 border rounded bg-gray-50">
-                      <h3 className="font-semibold mb-3">
+                      <h3 className="font-semibold text-black mb-3">
                         {editingAttrId ? 'Edit Attribute' : 'New Attribute'}
                       </h3>
                       <div className="space-y-3">
@@ -1080,8 +1080,8 @@ export default function ResourcesPage() {
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">{attr.name}</h3>
-                                <span className="text-xs bg-gray-200 px-2 py-1 rounded">
+                                <h3 className="font-semibold text-black">{attr.name}</h3>
+                                <span className="text-xs bg-gray-200 text-black px-2 py-1 rounded">
                                   {attr.data_type}
                                 </span>
                                 {attr.is_required && (

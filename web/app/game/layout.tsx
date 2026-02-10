@@ -5,11 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useGame } from '@/contexts/GameContext';
 import { addDaysToDate, getTimeRemaining } from '@/lib/dateUtils';
-import { authAPI, User } from '@/lib/api';
+import { authAPI } from '@/lib/api';
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
-  const { currentGame, currentPlayer, setCurrentGame } = useGame();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { currentGame, currentPlayer, currentUser, setCurrentGame, setCurrentUser } = useGame();
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const router = useRouter();
 
@@ -20,18 +19,20 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
       return;
     }
 
-    // Fetch current user data
-    const fetchUser = async () => {
-      try {
-        const response = await authAPI.getMe();
-        setCurrentUser(response.user);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-      }
-    };
+    // Fetch current user data if not already in context
+    if (!currentUser) {
+      const fetchUser = async () => {
+        try {
+          const response = await authAPI.getMe();
+          setCurrentUser(response.user);
+        } catch (error) {
+          console.error('Failed to fetch user:', error);
+        }
+      };
 
-    fetchUser();
-  }, [currentGame, currentPlayer, router]);
+      fetchUser();
+    }
+  }, [currentGame, currentPlayer, currentUser, router, setCurrentUser]);
 
   // Update time remaining every second
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                 <div> 
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Game Information</h2>
 
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
                     <p><strong>{currentPlayer.name}</strong> </p>
                     {'location_name' in currentPlayer && currentPlayer.location_name && (
                       <p><strong>Your Location:</strong> {currentPlayer.location_name}</p>
@@ -166,7 +167,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                 {/* Turn Information */}
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Turn Information</h2>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
                     <p><strong>User Turns:</strong> {currentUser?.turns ?? 'Loading...'}</p>
                     <p><strong>Active Turns:</strong> {currentPlayer.turns_active}</p>
                     <p><strong>Reserve Turns:</strong> {currentPlayer.turns_reserve}</p>
@@ -177,7 +178,7 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
                 {/* Money Information */}
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Money Information</h2>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
                     <p><strong>Cash on Hand:</strong> ${currentPlayer.money_cash?.toLocaleString() ?? 0}</p>
                     <p><strong>Money in Bank:</strong> ${currentPlayer.money_bank?.toLocaleString() ?? 0}</p>
                     <p><strong>Total Money:</strong> ${((currentPlayer.money_cash ?? 0) + (currentPlayer.money_bank ?? 0)).toLocaleString()}</p>

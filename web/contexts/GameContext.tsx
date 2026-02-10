@@ -1,12 +1,14 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Game, Player, PlayerWithUserInfo } from '@/lib/api';
+import { Game, Player, PlayerWithUserInfo, User } from '@/lib/api';
 
 interface GameContextType {
   currentGame: Game | null;
   currentPlayer: Player | PlayerWithUserInfo | null;
+  currentUser: User | null;
   setCurrentGame: (game: Game | null, player: Player | PlayerWithUserInfo | null) => void;
+  setCurrentUser: (user: User | null) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -17,6 +19,7 @@ const STORAGE_PLAYER_KEY = 'mobsterverse_current_player';
 export function GameProvider({ children }: { children: ReactNode }) {
   const [currentGame, setGame] = useState<Game | null>(null);
   const [currentPlayer, setPlayer] = useState<Player | PlayerWithUserInfo | null>(null);
+  const [currentUser, setUser] = useState<User | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load from localStorage on mount
@@ -54,6 +57,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setCurrentUser = (user: User | null) => {
+    setUser(user);
+  };
+
   // Don't render children until we've hydrated from localStorage
   // This prevents flash of wrong content
   if (!isHydrated) {
@@ -61,7 +68,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <GameContext.Provider value={{ currentGame, currentPlayer, setCurrentGame }}>
+    <GameContext.Provider value={{ currentGame, currentPlayer, currentUser, setCurrentGame, setCurrentUser }}>
       {children}
     </GameContext.Provider>
   );

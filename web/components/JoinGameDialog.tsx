@@ -100,7 +100,7 @@ export default function JoinGameDialog({ game, userNickname, onClose, onSuccess 
               id="playerName"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
               placeholder="Enter your player name"
               maxLength={100}
               autoFocus
@@ -123,7 +123,7 @@ export default function JoinGameDialog({ game, userNickname, onClose, onSuccess 
                     id="location"
                     value={selectedLocationId || ''}
                     onChange={(e) => setSelectedLocationId(e.target.value ? parseInt(e.target.value) : undefined)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
                     required
                   >
                     <option value="">Select a location</option>
