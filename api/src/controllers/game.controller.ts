@@ -3,7 +3,7 @@ import { GameRepository } from '../repositories/game.repository';
 import { PlayerRepository } from '../repositories/player.repository';
 import pool from '../db/connection';
 import { GameCreateData, GameUpdateData } from '../types/game.types';
-import { PlayerCreateData } from '../types/player.types';
+import { PlayerCreateData, PlayerUpdateData } from '../types/player.types';
 
 const gameRepository = new GameRepository(pool);
 const playerRepository = new PlayerRepository(pool);
@@ -334,6 +334,48 @@ export class GameController {
     } catch (error) {
       console.error('Get online players error:', error);
       res.status(500).json({ error: 'Failed to fetch online players' });
+    }
+  };
+
+  // Update current player's location
+  updatePlayerLocation = async (req: Request, res: Response) => {
+    try {
+      const gameId = parseInt(req.params.id as string);
+      const userId = (req as any).userId;
+      const { location_id } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      // Check if game exists
+      const game = await gameRepository.findById(gameId);
+      if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+      }
+
+      // Get current player
+      const player = await playerRepository.findByGameAndUser(gameId, userId);
+      if (!player) {
+        return res.status(404).json({ error: 'You have not joined this game' });
+      }
+
+      // Update player
+      const updateData: PlayerUpdateData = {};
+      if (location_id !== undefined) {
+        updateData.location_id = location_id;
+      }
+
+      const updatedPlayer = await playerRepository.update(gameId, player.id, updateData);
+      
+      // Fetch the updated player with location name
+      const players = await playerRepository.findByUser(userId);
+      const playerWithLocation = players.find(p => p.game_id === gameId);
+
+      res.json({ player: playerWithLocation || updatedPlayer, message: 'Player updated successfully' });
+    } catch (error) {
+      console.error('Update my player error:', error);
+      res.status(500).json({ error: 'Failed to update player' });
     }
   };
 }

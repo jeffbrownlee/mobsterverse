@@ -5,11 +5,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useGame } from '@/contexts/GameContext';
 import { addDaysToDate, getTimeRemaining } from '@/lib/dateUtils';
-import { authAPI } from '@/lib/api';
+import { authAPI, locationAPI, Location, gameAPI } from '@/lib/api';
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
   const { currentGame, currentPlayer, currentUser, setCurrentGame, setCurrentUser } = useGame();
   const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [pendingLocation, setPendingLocation] = useState<Location | null>(null);
+  const [updating, setUpdating] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,6 +39,28 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     }
   }, [currentGame, currentPlayer, currentUser, router, setCurrentUser]);
 
+  // Fetch locations for the game
+  useEffect(() => {
+    if (!currentGame) return;
+
+    const fetchLocations = async () => {
+      if (currentGame.location_set_id) {
+        try {
+          const response = await locationAPI.getLocationSet(currentGame.location_set_id);
+          setLocations(response.locationSet.locations);
+          // Set the current player's location as the default
+          if (currentPlayer?.location_id) {
+            setSelectedLocationId(currentPlayer.location_id);
+          }
+        } catch (error) {
+          console.error('Failed to fetch locations:', error);
+        }
+      }
+    };
+
+    fetchLocations();
+  }, [currentGame, currentPlayer?.location_id]);
+
   // Update time remaining every second
   useEffect(() => {
     if (!currentGame) return;
@@ -57,6 +84,45 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
     router.push('/dashboard');
   };
 
+  const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLocationId = parseInt(e.target.value);
+    const newLocation = locations.find(loc => loc.id === newLocationId);
+    
+    if (newLocation && newLocationId !== currentPlayer?.location_id) {
+      setPendingLocation(newLocation);
+      setShowLocationModal(true);
+    }
+  };
+
+  const handleConfirmLocationChange = async () => {
+    if (!pendingLocation || !currentGame || !currentPlayer) return;
+
+    setUpdating(true);
+    try {
+      const response = await gameAPI.updatePlayerLocation(currentGame.id, { location_id: pendingLocation.id });
+      
+      // Update the player in the context with the new location
+      setCurrentGame(currentGame, response.player);
+      setSelectedLocationId(pendingLocation.id);
+      setShowLocationModal(false);
+      setPendingLocation(null);
+    } catch (error) {
+      console.error('Failed to update location:', error);
+      alert('Failed to change location. Please try again.');
+      // Revert the dropdown to the current location
+      setSelectedLocationId(currentPlayer.location_id);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelLocationChange = () => {
+    // Revert the dropdown to the current location
+    setSelectedLocationId(currentPlayer?.location_id || null);
+    setShowLocationModal(false);
+    setPendingLocation(null);
+  };
+
   if (!currentGame || !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -73,7 +139,6 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Game #{currentGame.id}</h1>
-              <p className="text-sm text-gray-600">Playing as: {currentPlayer.name}</p>
             </div>
             <button
               onClick={handleLeaveGame}
@@ -150,16 +215,29 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
 
-            {/* Right Column - Game and Player Info */}
-            <div className="lg:col-span-4">
+          {/* Right Column - Game and Player Info */}
+          <div className="lg:col-span-4">
               <div className="bg-white shadow rounded-lg p-6 sticky top-8 space-y-6">
                 <div> 
                   <h2 className="text-lg font-semibold text-gray-900 mb-3">Game Information</h2>
 
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
                     <p><strong>{currentPlayer.name}</strong> </p>
-                    {'location_name' in currentPlayer && currentPlayer.location_name && (
-                      <p><strong>Your Location:</strong> {currentPlayer.location_name}</p>
+                    {locations.length > 0 ? (
+                      <select
+                        value={selectedLocationId ?? ''}
+                        onChange={handleLocationChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select Location</option>
+                        {locations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <p>{currentPlayer.location_name || 'No location set'}</p>
                     )}
                   </div>
                 </div>
@@ -188,6 +266,34 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </div>
-      </div>
+
+      {/* Location Change Confirmation Modal */}
+      {showLocationModal && pendingLocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Confirm Location Change</h2>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to move to <strong>{pendingLocation.name}</strong>?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleCancelLocationChange}
+                disabled={updating}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLocationChange}
+                disabled={updating}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {updating ? 'Moving...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

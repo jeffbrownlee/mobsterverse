@@ -19,6 +19,7 @@ router.post('/:id/join', authenticate, gameController.joinGame);
 router.get('/:id/players', authenticate, gameController.getGamePlayers);
 router.get('/:id/players/online', authenticate, gameController.getOnlinePlayers);
 router.get('/:id/my-player', authenticate, gameController.getMyPlayer);
+router.put('/:id/my-player', authenticate, gameController.updatePlayerLocation);
 
 // Admin routes - manage games
 router.post('/', authenticate, requireAdmin, gameController.createGame);

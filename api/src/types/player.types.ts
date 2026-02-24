@@ -11,6 +11,7 @@ export interface Player {
   money_bank: number;
   created_at: Date;
   updated_at: Date;
+  location_name?: string | null;
 }
 
 export interface PlayerCreateData {

@@ -142,7 +142,12 @@ export class PlayerRepository {
       const schemaName = getGameSchemaName(game.id);
       try {
         const result = await this.pool.query(
-          `SELECT * FROM ${schemaName}.players WHERE user_id = $1`,
+          `SELECT 
+            p.*,
+            l.name as location_name
+           FROM ${schemaName}.players p
+           LEFT JOIN public.locations l ON p.location_id = l.id
+           WHERE p.user_id = $1`,
           [userId]
         );
         players.push(...result.rows.map(row => ({ ...row, game_id: game.id })));

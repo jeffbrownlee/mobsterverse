@@ -95,6 +95,7 @@ export interface Player {
   money_bank: number;
   created_at: string;
   updated_at: string;
+  location_name?: string | null;
 }
 
 export interface PlayerWithUserInfo extends Player {
@@ -274,6 +275,12 @@ export const gameAPI = {
   // Get my player info for a specific game
   getMyPlayer: async (id: number): Promise<{ player: Player }> => {
     const response = await api.get(`/api/game/${id}/my-player`);
+    return response.data;
+  },
+
+  // Update my player location for a specific game
+  updatePlayerLocation: async (id: number, data: { location_id?: number }): Promise<{ player: Player; message: string }> => {
+    const response = await api.put(`/api/game/${id}/my-player`, data);
     return response.data;
   },
 

@@ -62,15 +62,25 @@ export default function DashboardPage() {
     setSelectedGame(game);
   };
 
-  const handleJoinSuccess = (player: Player) => {
-    // Add the player to the map
-    setPlayersByGame(new Map(playersByGame).set(selectedGame!.id, player));
-    setSelectedGame(null);
+  const handleJoinSuccess = async (player: Player) => {
+    // Refresh the game lists to get complete player data with location_name
+    try {
+      const myGamesResponse = await gameAPI.getMyGames();
+      setMyGames(myGamesResponse.games);
+      
+      // Build a map of game IDs to player objects
+      const playerMap = new Map<number, Player>();
+      myGamesResponse.games.forEach((game) => {
+        if (game.player) {
+          playerMap.set(game.id, game.player);
+        }
+      });
+      setPlayersByGame(playerMap);
+    } catch (error) {
+      console.error('Failed to refresh player data:', error);
+    }
     
-    // Optionally refresh the game lists
-    gameAPI.getMyGames().then((response) => {
-      setMyGames(response.games);
-    });
+    setSelectedGame(null);
   };
 
   const isPlayerInGame = (gameId: number): boolean => {
@@ -128,15 +138,20 @@ export default function DashboardPage() {
               <p className="text-gray-600 mb-8">No active games at the moment.</p>
             ) : (
               <div className="space-y-4 mb-8">
-                {activeGames.map((game) => (
+                {activeGames.map((game) => {
+                  const player = playersByGame.get(game.id);
+                  return (
                   <div key={game.id} className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
-                        <p className="text-sm text-gray-700 mt-1">{getRelativeTime(addDaysToDate(game.start_date, game.length_days), 'ending')}</p>
                         <div className="mt-2 text-sm text-gray-800 space-y-1">
                           <p><strong>Duration:</strong> {game.length_days} days</p>
+                          {player && (
+                            <p><strong>{player.name}</strong> in <strong>{player.location_name || 'Unknown Location'}</strong></p>
+                          )}
                         </div>
+                        <p className="text-sm text-gray-700 mt-2">{getRelativeTime(addDaysToDate(game.start_date, game.length_days), 'ending')}</p>
                       </div>
                       {isPlayerInGame(game.id) ? (
                         <button
@@ -161,7 +176,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -170,18 +186,20 @@ export default function DashboardPage() {
               <p className="text-gray-600">No upcoming games in the next 48 hours.</p>
             ) : (
               <div className="space-y-4">
-                {upcomingGames.map((game) => (
+                {upcomingGames.map((game) => {
+                  const player = playersByGame.get(game.id);
+                  return (
                   <div key={game.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">Game #{game.id}</h3>
-                        <p className="text-sm text-gray-700 mt-1">{getRelativeTime(game.start_date, 'starting')}</p>
                         <div className="mt-2 text-sm text-gray-800 space-y-1">
-                          {isPlayerInGame(game.id) && (
-                            <p><strong>Playing as:</strong> {playersByGame.get(game.id)?.name}</p>
-                          )}
                           <p><strong>Duration:</strong> {game.length_days} days</p>
+                          {player && (
+                            <p><strong>{player.name}</strong> in <strong>{player.location_name || 'Unknown Location'}</strong></p>
+                          )}
                         </div>
+                        <p className="text-sm text-gray-700 mt-2">{getRelativeTime(game.start_date, 'starting')}</p>
                       </div>
                       {isPlayerInGame(game.id) ? (
                         <span className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg">
@@ -197,7 +215,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>
