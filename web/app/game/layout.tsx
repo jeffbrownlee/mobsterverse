@@ -209,25 +209,23 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           {/* Middle Column - Main Content */}
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-7">
             <div className="bg-white shadow rounded-lg p-6">
               {children}
             </div>
           </div>
 
           {/* Right Column - Game and Player Info */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
               <div className="bg-white shadow rounded-lg p-6 sticky top-8 space-y-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-1">{currentPlayer.name}</h3>
                 <div> 
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">Game Information</h2>
-
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
-                    <p><strong>{currentPlayer.name}</strong> </p>
                     {locations.length > 0 ? (
                       <select
                         value={selectedLocationId ?? ''}
                         onChange={handleLocationChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select Location</option>
                         {locations.map((location) => (
@@ -244,22 +242,21 @@ export default function GameLayout({ children }: { children: React.ReactNode }) 
 
                 {/* Turn Information */}
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">Turn Information</h2>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Turns</h3>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
-                    <p><strong>User Turns:</strong> {currentUser?.turns ?? 'Loading...'}</p>
-                    <p><strong>Active Turns:</strong> {currentPlayer.turns_active}</p>
-                    <p><strong>Reserve Turns:</strong> {currentPlayer.turns_reserve}</p>
-                    <p><strong>Total Transferred:</strong> {currentPlayer.turns_transferred}</p>
+                    <p><strong>Active:</strong> {currentPlayer.turns_active}</p>
+                    <p><strong>Reserve:</strong> {currentPlayer.turns_reserve}</p>
+                    <p><strong>User:</strong> {currentUser?.turns ?? 'Loading...'}</p>
+                    <p><strong>Transferred:</strong> {currentPlayer.turns_transferred}</p>
                   </div>
                 </div>
 
                 {/* Money Information */}
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-3">Money Information</h2>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Money</h3>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm text-gray-800">
-                    <p><strong>Cash on Hand:</strong> ${currentPlayer.money_cash?.toLocaleString() ?? 0}</p>
-                    <p><strong>Money in Bank:</strong> ${currentPlayer.money_bank?.toLocaleString() ?? 0}</p>
-                    <p><strong>Total Money:</strong> ${((currentPlayer.money_cash ?? 0) + (currentPlayer.money_bank ?? 0)).toLocaleString()}</p>
+                    <p><strong>Cash:</strong> ${currentPlayer.money_cash?.toLocaleString() ?? 0}</p>
+                    <p><strong>Bank:</strong> ${currentPlayer.money_bank?.toLocaleString() ?? 0}</p>
                   </div>
                 </div>
               </div>
